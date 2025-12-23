@@ -19,7 +19,10 @@ Parameters:
   prompt: "Your question or task"
   sandbox: "<see permission guide below>"
   cwd: "/path/to/project"        # Optional
+  # DO NOT specify 'model' parameter - use default from ~/.codex/config.toml
 ```
+
+**Important**: Do NOT specify the `model` parameter. The default model is configured in `~/.codex/config.toml` and will be used automatically.
 
 ### Sandbox Permission Guide
 

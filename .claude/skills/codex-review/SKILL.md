@@ -59,12 +59,27 @@ codex review --base main "Identify performance bottlenecks and optimization oppo
 codex review --uncommitted "Provide comprehensive review: code quality, potential bugs, improvements"
 ```
 
+## Known Issues
+
+> **[2025-12-23] Bug: Prompt argument is not supported**
+>
+> The current `codex review` has a known bug: the prompt argument (e.g., `"Focus on security"`) is **NOT actually passed to the model**, although `codex review --help` documentation indicates this feature is supported.
+>
+> **Workaround**: Use commands without the prompt argument:
+> ```bash
+> codex review --uncommitted
+> codex review --base main
+> ```
+>
+> This document will be updated once the official fix is released.
+
 ## Limitations
 
 - Requires git repository
 - Reviews git diff only (not arbitrary files)
 - May have usage limits
 - For file-based review, use codex agent instead
+- **[Bug]** Prompt argument currently not working, see Known Issues above
 
 ## Output
 

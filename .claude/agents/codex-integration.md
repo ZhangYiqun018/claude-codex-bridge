@@ -19,10 +19,9 @@ Parameters:
   prompt: "Your question or task"
   sandbox: "<see permission guide below>"
   cwd: "/path/to/project"        # Optional
-  # DO NOT specify 'model' parameter - use default from ~/.codex/config.toml
 ```
 
-**Important**: Do NOT specify the `model` parameter. The default model is configured in `~/.codex/config.toml` and will be used automatically.
+**CRITICAL — model parameter**: NEVER include the `model` parameter in any codex MCP tool call. The default model is configured in `~/.codex/config.toml` and will be used automatically. Passing `model` (e.g. `"o3"`, `"o4-mini"`, or any other value) will override the user's chosen default and waste quota on an unintended model. If you are uncertain, omit `model` entirely — this is always correct.
 
 ### Sandbox Permission Guide
 
@@ -39,9 +38,11 @@ Parameters:
 ```
 Tool: codex-reply
 Parameters:
-  conversationId: "<id from previous response>"
+  threadId: "<threadId from previous codex response>"
   prompt: "Follow-up question"
 ```
+
+> **Note**: The `conversationId` field is DEPRECATED since codex-cli 0.98.0. Always use `threadId` instead. The value comes from the `threadId` field in the previous `codex` or `codex-reply` response.
 
 ## Task Types
 
@@ -69,7 +70,7 @@ codex(prompt: "Analyze pros/cons of X approach", sandbox: "danger-full-access")
 **Round 2**: If disagreement, use codex-reply with context
 ```
 codex-reply(
-  conversationId: "<id>",
+  threadId: "<threadId from Round 1 response>",
   prompt: "Shared facts: ...
   Your view: ...
   Counter view: ...

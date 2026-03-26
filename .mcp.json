@@ -4,7 +4,9 @@
       "type": "stdio",
       "command": "codex",
       "args": [
-        "mcp-server"
+        "mcp-server",
+        "-c",
+        "model=\"gpt-5.4\""
       ],
       "env": {}
     }

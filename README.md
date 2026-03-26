@@ -1,323 +1,217 @@
 # Claude-Codex Bridge
 
-[English](#english) | [中文](#中文)
+[简体中文](./README.zh-CN.md)
 
----
+![Claude Code](https://img.shields.io/badge/Claude_Code-Bridge-111827?style=flat-square)
+![Codex CLI](https://img.shields.io/badge/Codex_CLI-0.116.0-2563eb?style=flat-square)
+![Default Model](https://img.shields.io/badge/Default-gpt--5.4-0f766e?style=flat-square)
+![Modes](https://img.shields.io/badge/Modes-MCP%20%7C%20Subagent%20%7C%20Skill%20%7C%20Hook-7c3aed?style=flat-square)
 
-## English
+Bridge Claude Code and Codex through MCP, subagents, review skills, and routine-decision hooks.
 
-### Overview
+- For people already working in Claude Code who want Codex without leaving the session, context switching, or repeated review setup.
+- Gives back structured handoffs, git-scoped findings, or automated low-risk decisions.
 
-**Claude-Codex Bridge** integrates OpenAI Codex CLI into Claude Code, enabling multi-model collaboration. This allows Claude to consult Codex for code reviews, brainstorming, architecture analysis, and structured debates.
+Jump to: [20-Second Demo](#demo-20s) | [Quick Start](#quick-start) | [Choose a Bridge](#choose-a-bridge) | [Best-Practice Prompts](#best-practice-prompts) | [Reference](#reference)
 
-**Key Features:**
-- 🔌 **MCP Server Integration** - Codex runs as an MCP server, accessible via native tools
-- 🤖 **Custom Agent** - Dedicated agent for autonomous Codex interactions
-- 📝 **Code Review Skill** - Specialized skill for git-based code review
-- 🔄 **Multi-turn Discussions** - Support for structured debates between Claude and Codex
+<a id="demo-20s"></a>
+## 20-Second Demo
 
-### The Bootstrap Story
+1. Paste this into Claude Code:
 
-> This entire project was **created by Claude Code itself** through a self-bootstrap process:
->
-> 1. User asked Claude to integrate Codex as a tool
-> 2. Claude explored `codex --help` and discovered MCP server mode
-> 3. Claude created the skill, agent, and MCP configuration
-> 4. Claude tested the integration and iterated based on Codex's feedback
-> 5. Claude packaged everything into this repository
->
-> This demonstrates how AI assistants can extend their own capabilities through tool integration.
+```text
+Use the codex-integration subagent to review the failing tests in my project and return exactly:
+1. Root cause
+2. Recommended fix direction
+3. Risks or tradeoffs
+4. File references
+```
 
-### Prerequisites
+Expected shape:
 
-- [Claude Code](https://claude.ai/code) installed and configured
-- [OpenAI Codex CLI](https://github.com/openai/codex) installed and authenticated
-- Git (for code review features)
+> Root cause: shared test fixture leaks state between runs
+> Recommended fix direction: isolate fixture setup in the target project's test harness
+> Risks or tradeoffs: touches helpers used by 3 suites
+> File references: `<target-test-file>`, `<target-service-file>`
 
-### Installation
-
-#### 1. Clone the repository
+2. For repetitive setup or migration prompts, enable the hook:
 
 ```bash
-git clone https://github.com/yourusername/claude-codex-bridge.git
+touch /path/to/project/.enable-copilot
+```
+
+Result: repeated `AskUserQuestion` prompts during setup or migration are auto-answered.
+
+## Quick Start
+
+### Project-Local Install
+
+Use this when one repository should carry its own bridge config.
+
+```bash
+git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
 cd claude-codex-bridge
-```
 
-#### 2. Copy configuration files to your project
-
-```bash
-# Copy MCP configuration
 cp .mcp.json /path/to/your/project/
-
-# Copy agent and skill
 cp -r .claude /path/to/your/project/
+./hooks/install-hook.sh --project /path/to/your/project
 ```
 
-Or install globally:
+<details>
+<summary>Global install</summary>
+
+Use this when you want the same bridge available across projects.
 
 ```bash
-# Global MCP config (available in all projects)
-claude mcp add --transport stdio codex-server -- codex mcp-server
+git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
+cd claude-codex-bridge
 
-# Global agent (user-level)
+claude mcp add --transport stdio codex-server -- codex mcp-server -c 'model="gpt-5.4"'
+
 mkdir -p ~/.claude/agents
 cp .claude/agents/codex-integration.md ~/.claude/agents/
 
-# Global skill (user-level)
 mkdir -p ~/.claude/skills/codex-review
 cp .claude/skills/codex-review/SKILL.md ~/.claude/skills/codex-review/
+
+./hooks/install-hook.sh --global
 ```
 
-#### 3. Restart Claude Code
+</details>
 
-Restart Claude Code to load the MCP server.
+Restart Claude Code after installation.
 
-### Usage
+## Choose a Bridge
 
-#### MCP Tools (via Agent or directly)
+| If you want to... | Use | Why | Config |
+|-------------------|-----|-----|--------|
+| Ask one well-formed question | `MCP bridge` | Fastest path, smallest setup cost | `.mcp.json` |
+| Hand off a compact workflow | `Subagent bridge` | Claude gets back a structured result | inherits `.mcp.json` |
+| Review git-defined changes | `Review skill` | Cleanest path when git already defines scope | `~/.codex/config.toml` |
+| Auto-answer routine decisions | `Hook bridge` | Automates routine low-risk decisions | hook default -> env -> flag |
 
-Two MCP tools are available after configuration:
+## Best-Practice Prompts
 
-| Tool | Purpose |
-|------|---------|
-| `codex` | Start a new Codex session |
-| `codex-reply` | Continue an existing conversation |
+Name the bridge mode explicitly in your prompt. That keeps Claude from guessing the workflow.
 
-**Example - Direct MCP call:**
+### MCP Bridge
+
+Best for one external opinion, one comparison, or one focused technical question.
+
+```text
+Use the codex MCP tool to analyze the pros and cons of this migration plan and return exactly:
+1. Main upside
+2. Main downside
+3. Recommendation
 ```
-Use the codex MCP tool to analyze the pros and cons of microservices vs monolith
+
+### Subagent Bridge
+
+Best for arbitrary file review, architecture work, multi-step synthesis, or anything that should come back as a compact handoff.
+
+```text
+Use the codex-integration subagent to review the auth subsystem and return exactly:
+1. Key findings
+2. Tradeoffs between the two refactor options
+3. Recommended next step
+4. File references
 ```
 
-**Example - Via Agent:**
+### Review Skill
+
+Best when git already defines the review scope.
+
+```text
+Use the codex-review skill to review my uncommitted changes and return exactly:
+1. Critical findings
+2. Missing tests
+3. Risky assumptions
+4. File references
 ```
-Ask the codex agent to review my current code changes
-```
 
-#### Sandbox Permissions
-
-| Mode | Use Case |
-|------|----------|
-| `read-only` | Conversations, brainstorming (default) |
-| `workspace-write` | Running tests, shell commands |
-| `danger-full-access` | Full file system access |
-
-#### Code Review Skill
-
-For git-based code review:
+<details>
+<summary>Terminal equivalents</summary>
 
 ```bash
-# Review uncommitted changes
-codex review --uncommitted "Focus on security issues"
-
-# Review against a branch
-codex review --base main "Check for breaking changes"
-
-# Review a specific commit
-codex review --commit HEAD~1 "Analyze this change"
+codex review --uncommitted
+codex review --base main
+codex review --commit HEAD~1
 ```
 
-### Architecture
+</details>
 
+### Prompting Rules
+
+- State the scope explicitly: `uncommitted changes`, `base main`, a commit SHA, a subsystem, or a file set.
+- State the output shape explicitly: findings, tradeoffs, recommendations, next steps, or file references.
+- Prefer `read-only` unless the task genuinely needs command execution.
+- Use `codex-review` for git diffs and `codex-integration` for arbitrary files or custom review instructions.
+
+## Reference
+
+### Requirements
+
+- Requires Claude Code with MCP stdio support and hook support enabled, plus `codex-cli 0.116.0`.
+- `./hooks/install-hook.sh --project /path/to/project` writes hook config to `/path/to/project/.claude/settings.local.json`.
+- `./hooks/install-hook.sh --global` writes hook config to `~/.claude/settings.local.json`.
+
+<details>
+<summary>Selective install</summary>
+
+- MCP only: copy `.mcp.json` into the project or run `claude mcp add ...` globally.
+- Subagent only: copy `.claude/agents/codex-integration.md` into `.claude/agents/` or `~/.claude/agents/`.
+- Review skill only: copy `.claude/skills/codex-review/SKILL.md` into `.claude/skills/codex-review/` or `~/.claude/skills/codex-review/`.
+- Hook only: run `./hooks/install-hook.sh --project /path/to/project` or `./hooks/install-hook.sh --global`.
+
+</details>
+
+<details>
+<summary>Hook overrides</summary>
+
+Flag-file format:
+
+```text
+(line 1 reserved, leave empty)
+gpt-5.4
+/path/to/mockup.png,/path/to/screenshot.jpg
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Claude Code                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  Main Agent                                          │    │
-│  │  ├── Uses Skills (codex-review)                     │    │
-│  │  └── Delegates to Subagents (codex-integration)     │    │
-│  └──────────────────────┬──────────────────────────────┘    │
-│                         │                                    │
-│                         ▼                                    │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  MCP Server (codex mcp-server)                       │    │
-│  │  ├── Tool: codex (start session)                    │    │
-│  │  └── Tool: codex-reply (continue conversation)      │    │
-│  └──────────────────────┬──────────────────────────────┘    │
-│                         │                                    │
-└─────────────────────────┼────────────────────────────────────┘
-                          │
-                          ▼
-                   ┌─────────────┐
-                   │ Codex CLI   │
-                   └─────────────┘
-```
 
-### Security Notes
-
-- **Never send secrets** (API keys, passwords) to Codex
-- **Default to `read-only`** sandbox unless more access is needed
-- **Review large diffs carefully** - prefer focused reviews over full codebase scans
-- The `danger-full-access` mode should only be used when necessary
-
-### Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| MCP server not found | Restart Claude Code after adding `.mcp.json` |
-| Codex authentication error | Run `codex login` to authenticate |
-| Sandbox restrictions | Try `read-only` mode first, escalate if needed |
-| Tool name mismatch | Check `.mcp.json` server name matches tool calls |
-
-### License
-
-MIT License - see [LICENSE](LICENSE)
-
----
-
-## 中文
-
-### 概述
-
-**Claude-Codex Bridge** 将 OpenAI Codex CLI 集成到 Claude Code 中，实现多模型协作。这使得 Claude 可以咨询 Codex 进行代码审查、头脑风暴、架构分析和结构化辩论。
-
-**核心特性：**
-- 🔌 **MCP Server 集成** - Codex 作为 MCP 服务器运行，通过原生工具访问
-- 🤖 **自定义 Agent** - 专用 agent 处理自主的 Codex 交互
-- 📝 **代码审查 Skill** - 专门用于 git 变更审查的技能
-- 🔄 **多轮对话** - 支持 Claude 和 Codex 之间的结构化辩论
-
-### 自举故事
-
-> 这个项目完全由 **Claude Code 自己创建**，通过自举过程：
->
-> 1. 用户要求 Claude 将 Codex 集成为工具
-> 2. Claude 探索 `codex --help` 并发现了 MCP 服务器模式
-> 3. Claude 创建了 skill、agent 和 MCP 配置
-> 4. Claude 测试集成并根据 Codex 的反馈迭代改进
-> 5. Claude 将所有内容打包成这个仓库
->
-> 这展示了 AI 助手如何通过工具集成来扩展自己的能力。
-
-### 前置要求
-
-- 已安装并配置 [Claude Code](https://claude.ai/code)
-- 已安装并认证 [OpenAI Codex CLI](https://github.com/openai/codex)
-- Git（用于代码审查功能）
-
-### 安装
-
-#### 1. 克隆仓库
+Optional environment variables:
 
 ```bash
-git clone https://github.com/yourusername/claude-codex-bridge.git
-cd claude-codex-bridge
+export COPILOT_MODEL=gpt-5.4
+export COPILOT_TIMEOUT=300
+export COPILOT_DEBUG=1
+export COPILOT_IMAGES=/path/to/mockup.png,/path/to/screenshot.jpg
+export COPILOT_SYSTEM_PROMPT=/path/to/prompt.md
 ```
 
-#### 2. 复制配置文件到你的项目
+Reset one project's hook session:
 
 ```bash
-# 复制 MCP 配置
-cp .mcp.json /path/to/your/project/
-
-# 复制 agent 和 skill
-cp -r .claude /path/to/your/project/
+rm /path/to/project/.copilot-session-id
 ```
 
-或者全局安装：
+</details>
 
-```bash
-# 全局 MCP 配置（所有项目可用）
-claude mcp add --transport stdio codex-server -- codex mcp-server
+<details>
+<summary>Troubleshooting</summary>
 
-# 全局 agent（用户级别）
-mkdir -p ~/.claude/agents
-cp .claude/agents/codex-integration.md ~/.claude/agents/
+- Claude cannot see `codex` MCP tools: confirm `.mcp.json` is present or the global MCP entry exists, then restart Claude Code.
+- `codex review` uses the wrong model: check `~/.codex/config.toml`; the review path does not use `.mcp.json`.
+- Hook does not trigger: confirm the hook is enabled and was installed into the target project's or global `settings.local.json`.
+- Hook fails silently: set `COPILOT_DEBUG=1` and inspect `/tmp/claude-copilot-hook.log`.
+- Codex auth errors: run `codex login`.
 
-# 全局 skill（用户级别）
-mkdir -p ~/.claude/skills/codex-review
-cp .claude/skills/codex-review/SKILL.md ~/.claude/skills/codex-review/
-```
+</details>
 
-#### 3. 重启 Claude Code
+## Safety
 
-重启 Claude Code 以加载 MCP 服务器。
+- Never send secrets or credentials unless you intentionally want Codex to see them.
+- Default to `read-only` whenever possible.
+- Treat the hook as automation, not as the safe default for high-risk decisions.
+- Keep `.claude/settings.local.json` local; this repository intentionally ignores it.
 
-### 使用方法
+## License
 
-#### MCP 工具（通过 Agent 或直接调用）
-
-配置后有两个 MCP 工具可用：
-
-| 工具 | 用途 |
-|------|------|
-| `codex` | 启动新的 Codex 会话 |
-| `codex-reply` | 继续现有对话 |
-
-**示例 - 直接 MCP 调用：**
-```
-使用 codex MCP 工具分析微服务和单体架构的优缺点
-```
-
-**示例 - 通过 Agent：**
-```
-让 codex agent 审查我当前的代码更改
-```
-
-#### 沙盒权限
-
-| 模式 | 使用场景 |
-|------|----------|
-| `read-only` | 对话、头脑风暴（默认） |
-| `workspace-write` | 运行测试、shell 命令 |
-| `danger-full-access` | 完全文件系统访问 |
-
-#### 代码审查 Skill
-
-用于 git 变更审查：
-
-```bash
-# 审查未提交的更改
-codex review --uncommitted "关注安全问题"
-
-# 与分支对比审查
-codex review --base main "检查破坏性更改"
-
-# 审查特定提交
-codex review --commit HEAD~1 "分析这个更改"
-```
-
-### 架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Claude Code                              │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  主 Agent                                                ││
-│  │  ├── 使用 Skills (codex-review)                         ││
-│  │  └── 委托给 Subagents (codex-integration)               ││
-│  └──────────────────────┬──────────────────────────────────┘│
-│                         │                                    │
-│                         ▼                                    │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  MCP Server (codex mcp-server)                          ││
-│  │  ├── 工具: codex (启动会话)                              ││
-│  │  └── 工具: codex-reply (继续对话)                        ││
-│  └──────────────────────┬──────────────────────────────────┘│
-│                         │                                    │
-└─────────────────────────┼────────────────────────────────────┘
-                          │
-                          ▼
-                   ┌─────────────┐
-                   │ Codex CLI   │
-                   └─────────────┘
-```
-
-### 安全注意事项
-
-- **永远不要发送密钥**（API keys、密码）给 Codex
-- **默认使用 `read-only`** 沙盒，除非需要更多访问权限
-- **谨慎审查大型 diff** - 优先进行专注的审查而非全代码库扫描
-- `danger-full-access` 模式仅在必要时使用
-
-### 故障排查
-
-| 问题 | 解决方案 |
-|------|----------|
-| MCP 服务器未找到 | 添加 `.mcp.json` 后重启 Claude Code |
-| Codex 认证错误 | 运行 `codex login` 进行认证 |
-| 沙盒限制 | 先尝试 `read-only` 模式，必要时升级 |
-| 工具名称不匹配 | 检查 `.mcp.json` 服务器名称与工具调用是否匹配 |
-
-### 许可证
-
-MIT 许可证 - 见 [LICENSE](LICENSE)
+MIT. See [LICENSE](./LICENSE).

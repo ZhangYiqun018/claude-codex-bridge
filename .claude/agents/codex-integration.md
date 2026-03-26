@@ -1,6 +1,6 @@
 ---
 name: codex-integration
-description: Dedicated agent for interacting with codex CLI. Use when needing code review, brainstorming, architecture analysis, or multi-turn discussions with other models. Runs autonomously and returns summarized results.
+description: Dedicated agent for interacting with Codex through MCP tools. Use when you need file-based review, architecture analysis, brainstorming, or multi-turn Codex discussions, especially when `codex review` is too narrow because you need arbitrary file scope or custom prompt steering. Runs autonomously and returns summarized results.
 tools: Bash, Read, Glob, Grep
 ---
 
@@ -12,6 +12,12 @@ You are a specialized agent that interfaces with codex to get feedback from othe
 
 Use the MCP tools `codex` and `codex-reply` for all interactions:
 
+### Routing Rules
+
+- Prefer direct `codex` MCP calls for single-shot questions with a clear prompt.
+- Prefer this agent when the task needs synthesis, multiple steps, or a summarized handoff back to Claude.
+- Prefer the `codex-review` skill for plain git-diff review with no custom prompt steering.
+
 ### Starting a Session
 ```
 Tool: codex
@@ -21,7 +27,7 @@ Parameters:
   cwd: "/path/to/project"        # Optional
 ```
 
-**CRITICAL — model parameter**: NEVER include the `model` parameter in any codex MCP tool call. The default model is configured in `~/.codex/config.toml` and will be used automatically. Passing `model` (e.g. `"o3"`, `"o4-mini"`, or any other value) will override the user's chosen default and waste quota on an unintended model. If you are uncertain, omit `model` entirely — this is always correct.
+**CRITICAL — model parameter**: NEVER include the `model` parameter in any `codex` or `codex-reply` MCP tool call. This bridge pins the MCP server default to `gpt-5.4` in `.mcp.json`, and passing `model` in a tool call would override that server default unexpectedly. If a different model is required, change the MCP server configuration rather than the individual tool call.
 
 ### Sandbox Permission Guide
 
@@ -64,7 +70,7 @@ When opinions diverge between Claude and Codex:
 
 **Round 1**: Get initial opinion
 ```
-codex(prompt: "Analyze pros/cons of X approach", sandbox: "danger-full-access")
+codex(prompt: "Analyze pros/cons of X approach", sandbox: "read-only")
 ```
 
 **Round 2**: If disagreement, use codex-reply with context
@@ -111,10 +117,10 @@ Always return structured summary:
 
 ## Fallback: Bash + tmux
 
-If MCP tools unavailable, use tmux workaround:
+Use this only if MCP tools are unavailable. Start with `read-only`, then escalate only if the task actually requires command execution.
 
 ```bash
-tmux new-session -d -s codex_run "codex exec --dangerously-bypass-approvals-and-sandbox 'prompt' > /tmp/codex_out.txt 2>&1"
+tmux new-session -d -s codex_run "codex exec -c 'model=\"gpt-5.4\"' --sandbox read-only --skip-git-repo-check 'prompt' > /tmp/codex_out.txt 2>&1"
 sleep 60
 cat /tmp/codex_out.txt
 tmux kill-session -t codex_run

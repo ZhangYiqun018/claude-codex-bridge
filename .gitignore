@@ -16,6 +16,12 @@ Thumbs.db
 /tmp/
 *.tmp
 *.log
+__pycache__/
+*.pyc
 
 # Codex artifacts
 .codex/
+
+# Hook runtime artifacts
+.enable-copilot
+.copilot-session-id

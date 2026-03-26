@@ -1,11 +1,19 @@
 ---
 name: codex-review
-description: Use codex review command for git-based code review. Use when reviewing uncommitted changes, PR diffs, or specific commits.
+description: Use codex review for git-based diff review of uncommitted changes, changes against a base branch, or a specific commit. Use when the task is reviewing git changes rather than arbitrary files, and when Codex's default review behavior is sufficient without custom prompt steering.
 ---
 
 # Codex Code Review
 
 Use `codex review` for git-based code review tasks.
+
+`codex review` uses the Codex CLI default model from `~/.codex/config.toml`, not the project's `.mcp.json`. For consistency with this bridge, prefer `model = "gpt-5.4"` in `~/.codex/config.toml`.
+
+## Decision Rules
+
+- Use this skill when the review target is already defined by git state.
+- Prefer `--uncommitted`, `--base`, or `--commit` over free-form prompt steering.
+- If you need arbitrary files, custom review instructions, or architectural discussion, use the `codex-integration` agent instead.
 
 ## Use Cases
 
@@ -17,46 +25,37 @@ Use `codex review` for git-based code review tasks.
 
 ### Review Uncommitted Changes
 ```bash
-codex review --uncommitted "Focus on security and error handling"
+codex review --uncommitted
 ```
 
 ### Review Against Base Branch
 ```bash
-codex review --base main "Review for breaking changes"
-codex review --base develop "Check API compatibility"
+codex review --base main
+codex review --base develop
 ```
 
 ### Review Specific Commit
 ```bash
-codex review --commit <SHA> "Analyze this change"
-codex review --commit HEAD~1 "Review last commit"
+codex review --commit <SHA>
+codex review --commit HEAD~1
 ```
 
 ### With Custom Title
 ```bash
-codex review --uncommitted --title "Feature: Add user auth" "Review implementation"
+codex review --uncommitted --title "Feature: Add user auth"
 ```
 
-## Review Focus Areas
-
-When requesting review, specify focus:
-
-1. **Security**: injection, auth, data exposure
-2. **Correctness**: logic errors, edge cases
-3. **Performance**: inefficiencies, scaling issues
-4. **Breaking changes**: API compatibility, migrations
-
-## Example Prompts
+## Example Commands
 
 ```bash
-# Security-focused
-codex review --uncommitted "Check for security vulnerabilities, injection risks, and auth issues"
+# Review current worktree
+codex review --uncommitted
 
-# Performance-focused
-codex review --base main "Identify performance bottlenecks and optimization opportunities"
+# Review against a base branch
+codex review --base main
 
-# General review
-codex review --uncommitted "Provide comprehensive review: code quality, potential bugs, improvements"
+# Review a specific commit
+codex review --commit HEAD~1
 ```
 
 ## Known Issues

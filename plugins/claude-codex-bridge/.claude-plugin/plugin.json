@@ -1,0 +1,19 @@
+{
+  "name": "claude-codex-bridge",
+  "version": "0.2.0",
+  "description": "Bridge Claude Code and Codex through MCP, subagents, review skills, and an optional AskUserQuestion hook.",
+  "author": {
+    "name": "ZhangYiqun018",
+    "url": "https://github.com/ZhangYiqun018"
+  },
+  "homepage": "https://github.com/ZhangYiqun018/claude-codex-bridge",
+  "repository": "https://github.com/ZhangYiqun018/claude-codex-bridge",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "bridge",
+    "mcp",
+    "hook"
+  ]
+}

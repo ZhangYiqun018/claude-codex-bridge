@@ -6,16 +6,32 @@
 ![Codex CLI](https://img.shields.io/badge/Codex_CLI-0.116.0-2563eb?style=flat-square)
 ![Default Model](https://img.shields.io/badge/Default-gpt--5.4-0f766e?style=flat-square)
 ![Modes](https://img.shields.io/badge/Modes-MCP%20%7C%20Subagent%20%7C%20Skill%20%7C%20Hook-7c3aed?style=flat-square)
+![Plugins](https://img.shields.io/badge/Plugins-Claude%20%7C%20Codex-1d4ed8?style=flat-square)
 
 Bridge Claude Code and Codex through MCP, subagents, review skills, and routine-decision hooks.
 
 - For people already working in Claude Code who want Codex without leaving the session, context switching, or repeated review setup.
 - Gives back structured handoffs, git-scoped findings, or automated low-risk decisions.
+- Ships in two plugin forms: a Claude Code native plugin for direct runtime integration, and a Codex plugin for guided installation into Claude projects.
 
-Jump to: [20-Second Demo](#demo-20s) | [Quick Start](#quick-start) | [Choose a Bridge](#choose-a-bridge) | [Best-Practice Prompts](#best-practice-prompts) | [Reference](#reference)
+Jump to: [What's New](#whats-new) | [20-Second Demo](#demo-20s) | [Plugin Install](#plugin-install) | [Quick Start](#quick-start) | [Choose a Bridge](#choose-a-bridge) | [Best-Practice Prompts](#best-practice-prompts) | [Reference](#reference)
+
+<a id="whats-new"></a>
+## ✨ What's New
+
+- Claude Code now has a native plugin install path for this repo. In plugin-enabled environments, you no longer need to copy the bridge files by hand.
+- Codex still gets its own plugin packaging, but its role is now clearer: it acts as the bridge installer and rollout path.
+- The bridge defaults remain pinned to `gpt-5.4`, including the packaged MCP server config.
+
+Plugin-first install:
+
+```bash
+claude plugin marketplace add . --scope project
+claude plugin install claude-codex-bridge --scope project
+```
 
 <a id="demo-20s"></a>
-## 20-Second Demo
+## ⚡ 20-Second Demo
 
 1. Paste this into Claude Code:
 
@@ -42,11 +58,99 @@ touch /path/to/project/.enable-copilot
 
 Result: repeated `AskUserQuestion` prompts during setup or migration are auto-answered.
 
-## Quick Start
+<a id="plugin-install"></a>
+## 🧩 Plugin Install
 
-### Project-Local Install
+### 🤖 Claude Code Plugin
 
-Use this when one repository should carry its own bridge config.
+This is now the preferred install path for the repo.
+
+Why it fits:
+- Claude plugins can bundle `agents/`, `skills/`, `hooks/hooks.json`, and `.mcp.json` directly.
+- That maps almost exactly to this repository's bridge design.
+- After install, Claude gets the bridge natively instead of requiring manual file copies.
+
+Fastest session-only test:
+
+```bash
+claude --plugin-dir "$PWD/plugins/claude-codex-bridge"
+```
+
+Persistent project install from this repo:
+
+```bash
+claude plugin marketplace add . --scope project
+claude plugin install claude-codex-bridge --scope project
+```
+
+Persistent user install from GitHub once the repo is published as a marketplace source:
+
+```bash
+claude plugin marketplace add https://github.com/ZhangYiqun018/claude-codex-bridge --scope user --sparse .claude-plugin plugins
+claude plugin install claude-codex-bridge --scope user
+```
+
+What the Claude plugin provides directly:
+- `codex-server` MCP server pinned to `gpt-5.4`
+- `codex-integration` subagent
+- `codex-review` skill
+- AskUserQuestion hook packaged as plugin hooks
+
+Claude may display the agent and skill under the `claude-codex-bridge` plugin namespace in `/agents` and `/skills`. When in doubt, refer to the plugin namespace explicitly.
+
+The hook remains opt-in per project:
+
+```bash
+touch /path/to/project/.enable-copilot
+```
+
+### 🧰 Codex Plugin
+
+The Codex plugin still matters, but for a different job: installation and rollout.
+
+What it does well:
+- Installs the bridge into the current project or into global Claude Code config.
+- Wraps setup as a reusable Codex skill instead of asking users to copy files by hand.
+
+What it does not replace:
+- Claude-side runtime still lives in `.mcp.json`, `.claude/...`, and hook config written into the target project or home directory.
+
+This repo includes:
+- Codex marketplace: `.agents/plugins/marketplace.json`
+- Codex plugin root: `plugins/claude-codex-bridge`
+- Installer skill: `install-claude-codex-bridge`
+
+If you open Codex in this repo, install the plugin from `/plugins`, then ask:
+
+```text
+Use the install-claude-codex-bridge skill to install the full bridge into this project.
+```
+
+To enable the hook immediately:
+
+```text
+Use the install-claude-codex-bridge skill to install the full bridge into this project and enable the hook.
+```
+
+<a id="quick-start"></a>
+## 🚀 Quick Start
+
+### 🥇 Claude Plugin First
+
+If Claude Code already has plugin support in your environment, use the plugin path first.
+
+```bash
+claude plugin marketplace add . --scope project
+claude plugin install claude-codex-bridge --scope project
+```
+
+Local directory sources do not support `--sparse`; use `--sparse .claude-plugin plugins` only when the marketplace source is GitHub or another git source.
+
+That gives the project a native Claude plugin package instead of copied bridge files.
+
+### 📁 Manual Project-Local Install
+
+Use this fallback when you want the bridge as plain files in one repository.
 
 ```bash
 git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
@@ -81,7 +185,8 @@ cp .claude/skills/codex-review/SKILL.md ~/.claude/skills/codex-review/
 
 Restart Claude Code after installation.
 
-## Choose a Bridge
+<a id="choose-a-bridge"></a>
+## 🧭 Choose a Bridge
 
 | If you want to... | Use | Why | Config |
 |-------------------|-----|-----|--------|
@@ -90,11 +195,12 @@ Restart Claude Code after installation.
 | Review git-defined changes | `Review skill` | Cleanest path when git already defines scope | `~/.codex/config.toml` |
 | Auto-answer routine decisions | `Hook bridge` | Automates routine low-risk decisions | hook default -> env -> flag |
 
-## Best-Practice Prompts
+<a id="best-practice-prompts"></a>
+## 🗣️ Best-Practice Prompts
 
 Name the bridge mode explicitly in your prompt. That keeps Claude from guessing the workflow.
 
-### MCP Bridge
+### 🔌 MCP Bridge
 
 Best for one external opinion, one comparison, or one focused technical question.
 
@@ -105,7 +211,7 @@ Use the codex MCP tool to analyze the pros and cons of this migration plan and r
 3. Recommendation
 ```
 
-### Subagent Bridge
+### 🧠 Subagent Bridge
 
 Best for arbitrary file review, architecture work, multi-step synthesis, or anything that should come back as a compact handoff.
 
@@ -117,7 +223,7 @@ Use the codex-integration subagent to review the auth subsystem and return exact
 4. File references
 ```
 
-### Review Skill
+### 🔍 Review Skill
 
 Best when git already defines the review scope.
 
@@ -140,20 +246,23 @@ codex review --commit HEAD~1
 
 </details>
 
-### Prompting Rules
+### 📏 Prompting Rules
 
 - State the scope explicitly: `uncommitted changes`, `base main`, a commit SHA, a subsystem, or a file set.
 - State the output shape explicitly: findings, tradeoffs, recommendations, next steps, or file references.
 - Prefer `read-only` unless the task genuinely needs command execution.
 - Use `codex-review` for git diffs and `codex-integration` for arbitrary files or custom review instructions.
 
-## Reference
+<a id="reference"></a>
+## 📚 Reference
 
-### Requirements
+### ✅ Requirements
 
 - Requires Claude Code with MCP stdio support and hook support enabled, plus `codex-cli 0.116.0`.
 - `./hooks/install-hook.sh --project /path/to/project` writes hook config to `/path/to/project/.claude/settings.local.json`.
 - `./hooks/install-hook.sh --global` writes hook config to `~/.claude/settings.local.json`.
+- Claude plugin marketplace entrypoint is `claude plugin marketplace add`; this repo exposes a local marketplace at `.claude-plugin/marketplace.json`.
+- Codex plugin install entrypoint is `/plugins` inside the Codex CLI; this repo also exposes a Codex marketplace at `.agents/plugins/marketplace.json`.
 
 <details>
 <summary>Selective install</summary>
@@ -162,6 +271,19 @@ codex review --commit HEAD~1
 - Subagent only: copy `.claude/agents/codex-integration.md` into `.claude/agents/` or `~/.claude/agents/`.
 - Review skill only: copy `.claude/skills/codex-review/SKILL.md` into `.claude/skills/codex-review/` or `~/.claude/skills/codex-review/`.
 - Hook only: run `./hooks/install-hook.sh --project /path/to/project` or `./hooks/install-hook.sh --global`.
+
+</details>
+
+<details>
+<summary>Plugin packaging</summary>
+
+- Claude marketplace: `.claude-plugin/marketplace.json`
+- Claude plugin manifest: `plugins/claude-codex-bridge/.claude-plugin/plugin.json`
+- Claude plugin components: `plugins/claude-codex-bridge/agents`, `plugins/claude-codex-bridge/skills`, `plugins/claude-codex-bridge/hooks`, `plugins/claude-codex-bridge/.mcp.json`
+- Codex marketplace: `.agents/plugins/marketplace.json`
+- Codex plugin manifest: `plugins/claude-codex-bridge/.codex-plugin/plugin.json`
+- Codex installer skill: `plugins/claude-codex-bridge/skills/install-claude-codex-bridge/SKILL.md`
+- Codex installer script: `plugins/claude-codex-bridge/scripts/install_bridge.py`
 
 </details>
 
@@ -205,13 +327,13 @@ rm /path/to/project/.copilot-session-id
 
 </details>
 
-## Safety
+## 🛡️ Safety
 
 - Never send secrets or credentials unless you intentionally want Codex to see them.
 - Default to `read-only` whenever possible.
 - Treat the hook as automation, not as the safe default for high-risk decisions.
 - Keep `.claude/settings.local.json` local; this repository intentionally ignores it.
 
-## License
+## 📄 License
 
 MIT. See [LICENSE](./LICENSE).

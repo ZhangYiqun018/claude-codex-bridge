@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "codex-server": {
+      "type": "stdio",
+      "command": "codex",
+      "args": [
+        "mcp-server",
+        "-c",
+        "model=\"gpt-5.4\""
+      ],
+      "env": {}
+    }
+  }
+}

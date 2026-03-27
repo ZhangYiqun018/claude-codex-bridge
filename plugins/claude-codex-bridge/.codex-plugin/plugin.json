@@ -1,0 +1,39 @@
+{
+  "name": "claude-codex-bridge",
+  "version": "0.2.0",
+  "description": "Install and update the Claude-Codex bridge into a project or globally.",
+  "author": {
+    "name": "ZhangYiqun018",
+    "url": "https://github.com/ZhangYiqun018"
+  },
+  "homepage": "https://github.com/ZhangYiqun018/claude-codex-bridge",
+  "repository": "https://github.com/ZhangYiqun018/claude-codex-bridge",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "bridge",
+    "mcp",
+    "hook"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claude-Codex Bridge",
+    "shortDescription": "Install the Claude Code <-> Codex bridge into a repo.",
+    "longDescription": "Adds the bridge files from this repository into a target project or globally, including MCP config, the codex-integration agent, the codex-review skill, and optional hook setup.",
+    "developerName": "ZhangYiqun018",
+    "category": "Productivity",
+    "capabilities": [
+      "Install",
+      "Write",
+      "Automation"
+    ],
+    "websiteURL": "https://github.com/ZhangYiqun018/claude-codex-bridge",
+    "defaultPrompt": [
+      "Install the full Claude-Codex bridge into this project.",
+      "Install only codex-review into this project.",
+      "Install the full bridge here and enable the hook."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

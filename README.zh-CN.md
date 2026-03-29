@@ -202,53 +202,22 @@ touch /path/to/project/.enable-copilot
 <a id="quick-start"></a>
 ## 🚀 快速开始
 
-### 🤖 如果你从 Claude Code 开始
+### 插件安装（推荐）
 
-使用 Claude 插件。
+**从 Claude Code：**
 
 ```bash
 claude plugin marketplace add . --scope project
 claude plugin install claude-codex-bridge --scope project
 ```
 
-本地目录源不支持 `--sparse`；只有把 GitHub 仓库或其他 git 源作为 marketplace 时，才需要加 `--sparse .claude-plugin plugins`。
+**从 Codex：**
 
-这样拿到的是 `Claude -> Codex` 的原生运行时集成。
+在 `/plugins` 里添加本仓库 marketplace，然后安装 `claude-codex-bridge`。
 
-### 🧰 如果你从 Codex 开始
+### 手工安装
 
-使用 Codex 插件。
-
-在 `/plugins` 里安装后，可以直接说：
-
-```text
-使用 claude-integration skill 审查认证子系统。
-使用 claude-review skill 审查我当前未提交的更改。
-使用 claude-debate skill，让 Claude Code 跟我一起辩论这个设计方案。
-```
-
-这样拿到的是 `Codex -> Claude` 的原生运行时集成。
-
-### 🔁 如果你想手工做 Codex 侧接线
-
-只有你不想装 Codex 插件时，才用下面这组手工命令。
-
-手工做 Codex 侧接线：
-
-```bash
-codex mcp add claude-code -- claude mcp serve
-python3 plugins/claude-codex-bridge/scripts/ask_claude.py --cwd "$PWD" --prompt "审查认证子系统，并严格按以下结构返回：
-1. 关键发现
-2. 权衡点
-3. 推荐下一步
-4. 文件引用"
-```
-
-第一条命令把 Claude Code 的 MCP 工具面暴露给 Codex。第二条命令则是直接向 Claude Code 请求结构化意见。
-
-### 📁 手工项目级安装
-
-适合你明确希望把 bridge 作为普通文件放进某个仓库。
+不想用插件管理时，直接复制文件：
 
 ```bash
 git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
@@ -260,26 +229,21 @@ cp -r .claude /path/to/your/project/
 ```
 
 <details>
-<summary>全局安装</summary>
+<summary>全局安装或手工 Codex 接线</summary>
 
-适合希望所有项目共用同一套桥接能力。
+**全局安装**（跨项目可用）：
 
 ```bash
-git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
-cd claude-codex-bridge
-
 claude mcp add --transport stdio codex-server -- codex mcp-server -c 'model="gpt-5.4"'
+cp -r .claude/agents ~/.claude/
+cp -r .claude/skills ~/.claude/
+```
 
-mkdir -p ~/.claude/agents
-cp .claude/agents/codex-integration.md ~/.claude/agents/
+**手工 Codex → Claude 接线**（不用 Codex 插件）：
 
-mkdir -p ~/.claude/skills/codex-review
-cp .claude/skills/codex-review/SKILL.md ~/.claude/skills/codex-review/
-
-mkdir -p ~/.claude/skills/codex-debate
-cp .claude/skills/codex-debate/SKILL.md ~/.claude/skills/codex-debate/
-
-./hooks/install-hook.sh --global
+```bash
+codex mcp add claude-code -- claude mcp serve
+python3 plugins/claude-codex-bridge/scripts/ask_claude.py --cwd "$PWD" --prompt "你的提示词"
 ```
 
 </details>

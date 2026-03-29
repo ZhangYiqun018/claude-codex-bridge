@@ -202,53 +202,22 @@ Use the claude-debate skill to debate whether we should keep the current migrati
 <a id="quick-start"></a>
 ## 🚀 Quick Start
 
-### 🤖 If You Start In Claude Code
+### Plugin Install (Recommended)
 
-Use the Claude plugin.
+**From Claude Code:**
 
 ```bash
 claude plugin marketplace add . --scope project
 claude plugin install claude-codex-bridge --scope project
 ```
 
-Local directory sources do not support `--sparse`; use `--sparse .claude-plugin plugins` only when the marketplace source is GitHub or another git source.
+**From Codex:**
 
-That gives you `Claude -> Codex` runtime integration.
+Open `/plugins`, add this repo's marketplace, then install `claude-codex-bridge`.
 
-### 🧰 If You Start In Codex
+### Manual Install
 
-Use the Codex plugin.
-
-Install it from `/plugins`, then use one of:
-
-```text
-Use the claude-integration skill to review the auth subsystem.
-Use the claude-review skill to review my uncommitted changes.
-Use the claude-debate skill to debate this design with Claude Code.
-```
-
-That gives you `Codex -> Claude` runtime integration.
-
-### 🔁 If You Want Manual Codex-Side Wiring
-
-Use this only if you do not want the Codex plugin and are wiring the reverse bridge by hand.
-
-Manual Codex-side setup:
-
-```bash
-codex mcp add claude-code -- claude mcp serve
-python3 plugins/claude-codex-bridge/scripts/ask_claude.py --cwd "$PWD" --prompt "Review the auth subsystem and return exactly:
-1. Key findings
-2. Tradeoffs
-3. Recommended next step
-4. File references"
-```
-
-The first command exposes Claude Code's MCP tool surface to Codex. The second asks Claude Code directly for a structured opinion.
-
-### 📁 Manual Project-Local Install
-
-Use this fallback when you want the bridge as plain files in one repository.
+Copy files directly when you don't want plugin management:
 
 ```bash
 git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
@@ -260,26 +229,21 @@ cp -r .claude /path/to/your/project/
 ```
 
 <details>
-<summary>Global install</summary>
+<summary>Global install or manual Codex wiring</summary>
 
-Use this when you want the same bridge available across projects.
+**Global install** (available across projects):
 
 ```bash
-git clone https://github.com/ZhangYiqun018/claude-codex-bridge.git
-cd claude-codex-bridge
-
 claude mcp add --transport stdio codex-server -- codex mcp-server -c 'model="gpt-5.4"'
+cp -r .claude/agents ~/.claude/
+cp -r .claude/skills ~/.claude/
+```
 
-mkdir -p ~/.claude/agents
-cp .claude/agents/codex-integration.md ~/.claude/agents/
+**Manual Codex → Claude wiring** (without Codex plugin):
 
-mkdir -p ~/.claude/skills/codex-review
-cp .claude/skills/codex-review/SKILL.md ~/.claude/skills/codex-review/
-
-mkdir -p ~/.claude/skills/codex-debate
-cp .claude/skills/codex-debate/SKILL.md ~/.claude/skills/codex-debate/
-
-./hooks/install-hook.sh --global
+```bash
+codex mcp add claude-code -- claude mcp serve
+python3 plugins/claude-codex-bridge/scripts/ask_claude.py --cwd "$PWD" --prompt "Your prompt here"
 ```
 
 </details>

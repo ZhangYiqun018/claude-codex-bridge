@@ -10,6 +10,8 @@ Thumbs.db
 .vscode/
 
 # Claude Code local settings (don't share)
+.claude/*.local.md
+.claude/settings.json
 .claude/settings.local.json
 
 # Temporary files
@@ -25,3 +27,6 @@ __pycache__/
 # Hook runtime artifacts
 .enable-copilot
 .copilot-session-id
+
+# Reverse-bridge runtime artifacts
+.claude-codex-bridge/

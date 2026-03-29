@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mode",
         default="full",
-        choices=["full", "mcp", "subagent", "review-skill", "hook"],
+        choices=["full", "mcp", "subagent", "review-skill", "debate-skill", "hook"],
         help="Which bridge component to install",
     )
     parser.add_argument(
@@ -59,6 +59,13 @@ def install_project_component(root: Path, project_dir: Path, mode: str, written:
         copy_file(
             root / ".claude" / "skills" / "codex-review" / "SKILL.md",
             project_dir / ".claude" / "skills" / "codex-review" / "SKILL.md",
+            written,
+        )
+
+    if mode in {"full", "debate-skill"}:
+        copy_file(
+            root / ".claude" / "skills" / "codex-debate" / "SKILL.md",
+            project_dir / ".claude" / "skills" / "codex-debate" / "SKILL.md",
             written,
         )
 
@@ -108,6 +115,13 @@ def install_global_component(root: Path, mode: str, written: list[str]) -> None:
         copy_file(
             root / ".claude" / "skills" / "codex-review" / "SKILL.md",
             home / ".claude" / "skills" / "codex-review" / "SKILL.md",
+            written,
+        )
+
+    if mode in {"full", "debate-skill"}:
+        copy_file(
+            root / ".claude" / "skills" / "codex-debate" / "SKILL.md",
+            home / ".claude" / "skills" / "codex-debate" / "SKILL.md",
             written,
         )
 

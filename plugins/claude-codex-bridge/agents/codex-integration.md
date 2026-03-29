@@ -16,6 +16,7 @@ Use the MCP tools `codex` and `codex-reply` for all interactions:
 
 - Prefer direct `codex` MCP calls for single-shot questions with a clear prompt.
 - Prefer this agent when the task needs synthesis, multiple steps, or a summarized handoff back to Claude.
+- Prefer the `codex-debate` skill for explicit multi-round debate or rebuttal workflows.
 - Prefer the `codex-review` skill for plain git-diff review with no custom prompt steering.
 
 ### Starting a Session

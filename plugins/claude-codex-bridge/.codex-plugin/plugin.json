@@ -1,7 +1,7 @@
 {
   "name": "claude-codex-bridge",
-  "version": "0.2.0",
-  "description": "Install and update the Claude-Codex bridge into a project or globally.",
+  "version": "0.5.0",
+  "description": "Codex host plugin for Codex -> Claude Code workflows through consultation, debate, review skills, and optional Claude Code MCP wiring.",
   "author": {
     "name": "ZhangYiqun018",
     "url": "https://github.com/ZhangYiqun018"
@@ -19,20 +19,22 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Claude-Codex Bridge",
-    "shortDescription": "Install the Claude Code <-> Codex bridge into a repo.",
-    "longDescription": "Adds the bridge files from this repository into a target project or globally, including MCP config, the codex-integration agent, the codex-review skill, and optional hook setup.",
+    "shortDescription": "Consult and debate with Claude Code from Codex, and optionally register Claude as a Codex MCP server.",
+    "longDescription": "Adds Codex-side skills for asking Claude Code for a second opinion, running explicit multi-round debates, requesting Claude-backed reviews, and wiring `claude mcp serve` into Codex as an MCP server when you want Claude Code tools inside Codex.",
     "developerName": "ZhangYiqun018",
     "category": "Productivity",
     "capabilities": [
-      "Install",
-      "Write",
-      "Automation"
+      "Claude Consultation",
+      "Debate",
+      "Review",
+      "MCP Setup"
     ],
     "websiteURL": "https://github.com/ZhangYiqun018/claude-codex-bridge",
     "defaultPrompt": [
-      "Install the full Claude-Codex bridge into this project.",
-      "Install only codex-review into this project.",
-      "Install the full bridge here and enable the hook."
+      "Use the claude-integration skill to get Claude Code's view on this subsystem.",
+      "Use the claude-debate skill to debate this design choice with Claude Code.",
+      "Use the claude-review skill to review my uncommitted changes.",
+      "Use the install-claude-code-mcp skill to add Claude Code as an MCP server for Codex."
     ],
     "brandColor": "#2563EB"
   }

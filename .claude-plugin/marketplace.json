@@ -5,14 +5,14 @@
     "url": "https://github.com/ZhangYiqun018"
   },
   "metadata": {
-    "description": "Plugins for bridging Claude Code and Codex through MCP, subagents, review skills, and hooks.",
-    "version": "0.2.0"
+    "description": "Bidirectional Claude Code and Codex bridge through plugins, skills, MCP, and hooks.",
+    "version": "0.5.0"
   },
   "plugins": [
     {
       "name": "claude-codex-bridge",
-      "version": "0.2.0",
-      "description": "Bridge Claude Code and Codex through MCP, subagents, review skills, and hooks.",
+      "version": "0.5.0",
+      "description": "Host-native Claude Code and Codex plugin pair for bidirectional bridging.",
       "source": "./plugins/claude-codex-bridge"
     }
   ]

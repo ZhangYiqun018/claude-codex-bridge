@@ -1,7 +1,7 @@
 {
   "name": "claude-codex-bridge",
-  "version": "0.2.0",
-  "description": "Bridge Claude Code and Codex through MCP, subagents, review skills, and an optional AskUserQuestion hook.",
+  "version": "0.5.0",
+  "description": "Claude Code host plugin for Claude -> Codex workflows through MCP, subagents, debate/review skills, and an optional AskUserQuestion hook.",
   "author": {
     "name": "ZhangYiqun018",
     "url": "https://github.com/ZhangYiqun018"

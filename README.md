@@ -30,12 +30,17 @@ Jump to: [What's New](#whats-new) | [Plugin Matrix](#plugin-matrix) | [20-Second
 <a id="whats-new"></a>
 ## ✨ What's New
 
-- Claude Code now has a native plugin install path for this repo. In plugin-enabled environments, you no longer need to copy the bridge files by hand.
-- Codex now gets its own real runtime path too: the Codex plugin ships Claude-facing skills instead of acting only as a Claude-side installer.
-- Codex -> Claude multi-turn conversations now have explicit session persistence through `.claude-codex-bridge/sessions/*.json` instead of relying only on repository-local "most recent session" behavior.
-- Debate workflows now exist in both directions: `codex-debate` for Claude Code and `claude-debate` for Codex.
-- The reverse bridge now has two Codex-side lanes: direct `claude -p` consultation and optional `claude mcp serve` registration through `codex mcp add`.
-- The bridge defaults remain pinned to `gpt-5.4`, including the packaged MCP server config.
+**Plugin Installation**
+- Claude Code now has a native plugin install path. In plugin-enabled environments, you no longer need to copy bridge files by hand.
+- Codex now gets its own real runtime path with Claude-facing skills instead of acting only as a Claude-side installer.
+
+**Bidirectional Workflows**
+- Debate workflows exist in both directions: `codex-debate` (Claude → Codex) and `claude-debate` (Codex → Claude).
+- The reverse bridge has two Codex-side lanes: direct `claude -p` consultation and optional `claude mcp serve` registration.
+
+**Session & Configuration**
+- Codex → Claude multi-turn conversations now have explicit session persistence in `.claude-codex-bridge/sessions/`.
+- MCP server remains pinned to `gpt-5.4` by default.
 
 Claude-side install:
 

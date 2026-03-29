@@ -27,15 +27,20 @@
 
 快速跳转：[最新进展](#whats-new) | [插件对照表](#plugin-matrix) | [20 秒体验](#demo-20s) | [插件安装](#plugin-install) | [快速开始](#quick-start) | [如何选择桥接方式](#choose-a-bridge) | [最佳实践提示词](#best-practice-prompts) | [参考信息](#reference)
 
-<a id="whats-new"></a>
+<a id=”whats-new”></a>
 ## ✨ 最新进展
 
-- 现在已经支持通过 Claude Code 原生插件安装这个仓库；在支持插件的环境里，不需要再手工复制 bridge 文件。
-- Codex 侧现在也有真正的运行时路径了：Codex 插件会直接提供 Claude 相关 skill，而不再只是一个 Claude 侧安装器。
-- `Codex -> Claude` 的多轮对话现在有显式 session 持久化，保存在 `.claude-codex-bridge/sessions/*.json`，不再只依赖“当前仓库最近一次 Claude 会话”。
-- 双向 debate 现在都已经有独立入口：Claude 侧是 `codex-debate`，Codex 侧是 `claude-debate`。
-- 反向桥接现在分成两条 Codex 侧路径：直接用 `claude -p` 做咨询，以及通过 `codex mcp add` 注册 `claude mcp serve`。
-- 当前打包进去的 MCP 默认模型仍然固定为 `gpt-5.4`。
+**插件安装**
+- Claude Code 现在有原生插件安装路径，不需要再手工复制 bridge 文件。
+- Codex 侧现在也有真正的运行时路径，直接提供 Claude 相关 skill。
+
+**双向工作流**
+- 双向 debate 都有独立入口：Claude 侧 `codex-debate`，Codex 侧 `claude-debate`。
+- 反向桥接有两条 Codex 侧路径：直接 `claude -p` 咨询，以及 `claude mcp serve` 注册。
+
+**会话与配置**
+- Codex → Claude 多轮对话现在有显式 session 持久化，保存在 `.claude-codex-bridge/sessions/`。
+- MCP 服务器默认仍固定为 `gpt-5.4`。
 
 Claude 侧安装：
 

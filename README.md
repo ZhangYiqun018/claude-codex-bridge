@@ -3,32 +3,63 @@
 [简体中文](./README.zh-CN.md)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-Bridge-111827?style=flat-square)
-![Codex CLI](https://img.shields.io/badge/Codex_CLI-0.116.0-2563eb?style=flat-square)
+![Codex CLI](https://img.shields.io/badge/Codex_CLI-0.117.0-2563eb?style=flat-square)
 ![Default Model](https://img.shields.io/badge/Default-gpt--5.4-0f766e?style=flat-square)
 ![Modes](https://img.shields.io/badge/Modes-MCP%20%7C%20Subagent%20%7C%20Skill%20%7C%20Hook-7c3aed?style=flat-square)
 ![Plugins](https://img.shields.io/badge/Plugins-Claude%20%7C%20Codex-1d4ed8?style=flat-square)
 
-Bridge Claude Code and Codex through MCP, subagents, review skills, and routine-decision hooks.
+> You already have Claude Code open. Now you need Codex's opinion on a migration plan.
+>
+> **Without this bridge**: Copy files, switch terminals, lose context, paste results back manually.
+>
+> **With this bridge**: Type one sentence, get Codex's structured analysis delivered right back to your Claude session.
 
-- For people already working in Claude Code who want Codex without leaving the session, context switching, or repeated review setup.
-- Gives back structured handoffs, git-scoped findings, or automated low-risk decisions.
-- Ships in two plugin forms: a Claude Code native plugin for direct runtime integration, and a Codex plugin for guided installation into Claude projects.
+This repo bridges the two AI coding assistants through **MCP**, **subagents**, **review skills**, and **hooks** — so you can use the best tool for each job without leaving your workflow.
 
-Jump to: [What's New](#whats-new) | [20-Second Demo](#demo-20s) | [Plugin Install](#plugin-install) | [Quick Start](#quick-start) | [Choose a Bridge](#choose-a-bridge) | [Best-Practice Prompts](#best-practice-prompts) | [Reference](#reference)
+**Who this is for:**
+- Claude users who want Codex's perspective without context switching
+- Codex users who want Claude's analysis without manual copy-paste
+- Teams that want consistent, reviewable, automated decision-making
+
+Jump to: [What's New](#whats-new) | [Plugin Matrix](#plugin-matrix) | [20-Second Demo](#demo-20s) | [Plugin Install](#plugin-install) | [Quick Start](#quick-start) | [Choose a Bridge](#choose-a-bridge) | [Best-Practice Prompts](#best-practice-prompts) | [Reference](#reference)
 
 <a id="whats-new"></a>
 ## ✨ What's New
 
 - Claude Code now has a native plugin install path for this repo. In plugin-enabled environments, you no longer need to copy the bridge files by hand.
-- Codex still gets its own plugin packaging, but its role is now clearer: it acts as the bridge installer and rollout path.
+- Codex now gets its own real runtime path too: the Codex plugin ships Claude-facing skills instead of acting only as a Claude-side installer.
+- Codex -> Claude multi-turn conversations now have explicit session persistence through `.claude-codex-bridge/sessions/*.json` instead of relying only on repository-local "most recent session" behavior.
+- Debate workflows now exist in both directions: `codex-debate` for Claude Code and `claude-debate` for Codex.
+- The reverse bridge now has two Codex-side lanes: direct `claude -p` consultation and optional `claude mcp serve` registration through `codex mcp add`.
 - The bridge defaults remain pinned to `gpt-5.4`, including the packaged MCP server config.
 
-Plugin-first install:
+Claude-side install:
 
 ```bash
 claude plugin marketplace add . --scope project
 claude plugin install claude-codex-bridge --scope project
 ```
+
+Codex-side install:
+
+```text
+Open `/plugins` in Codex, add this repo's marketplace, then install `claude-codex-bridge`.
+```
+
+<a id="plugin-matrix"></a>
+## 🧭 Plugin Matrix
+
+This repo now packages two different runtime plugins. They share one repository, but they do different jobs.
+
+| If your primary host is... | Install this plugin | Direction | Main runtime capabilities | Use it when... | It does not do... |
+|---|---|---|---|---|---|
+| `Claude Code` | `Claude Code plugin` | `Claude -> Codex` | `codex-server` MCP, `codex-integration`, `codex-review`, `codex-debate`, optional hook | Your work starts in Claude and you want Codex inside that workflow | Let Codex consult Claude; that is the Codex plugin's job |
+| `Codex` | `Codex plugin` | `Codex -> Claude` | `claude-integration`, `claude-review`, `claude-debate`, `install-claude-code-mcp` | Your work starts in Codex and you want Claude inside that workflow | Provide reverse hook automation; it depends on local Claude CLI instead |
+
+Short version:
+- Install the Claude plugin when Claude is the orchestrator and Codex is the external counterpart.
+- Install the Codex plugin when Codex is the orchestrator and Claude is the external counterpart.
+- Install both only if you actively use both directions.
 
 <a id="demo-20s"></a>
 ## ⚡ 20-Second Demo
@@ -58,12 +89,24 @@ touch /path/to/project/.enable-copilot
 
 Result: repeated `AskUserQuestion` prompts during setup or migration are auto-answered.
 
+3. In Codex, after installing the Codex plugin from `/plugins`, ask:
+
+```text
+Use the claude-integration skill to review the auth subsystem and return exactly:
+1. Key findings
+2. Tradeoffs
+3. Recommended next step
+4. File references
+```
+
+Result: Codex consults Claude Code directly instead of only helping Claude reach Codex.
+
 <a id="plugin-install"></a>
 ## 🧩 Plugin Install
 
 ### 🤖 Claude Code Plugin
 
-This is now the preferred install path for the repo.
+Install this when Claude Code is the place where you start the task.
 
 Why it fits:
 - Claude plugins can bundle `agents/`, `skills/`, `hooks/hooks.json`, and `.mcp.json` directly.
@@ -94,6 +137,7 @@ What the Claude plugin provides directly:
 - `codex-server` MCP server pinned to `gpt-5.4`
 - `codex-integration` subagent
 - `codex-review` skill
+- `codex-debate` skill
 - AskUserQuestion hook packaged as plugin hooks
 
 Claude may display the agent and skill under the `claude-codex-bridge` plugin namespace in `/agents` and `/skills`. When in doubt, refer to the plugin namespace explicitly.
@@ -106,38 +150,55 @@ touch /path/to/project/.enable-copilot
 
 ### 🧰 Codex Plugin
 
-The Codex plugin still matters, but for a different job: installation and rollout.
+Install this when Codex is the place where you start the task.
 
 What it does well:
-- Installs the bridge into the current project or into global Claude Code config.
-- Wraps setup as a reusable Codex skill instead of asking users to copy files by hand.
+- Lets Codex ask Claude Code for a second opinion through `claude -p`.
+- Adds a Claude-backed review path for uncommitted changes, base diffs, or specific commits.
+- Adds a structured multi-round debate path with explicit Claude session persistence.
+- Optionally registers `claude mcp serve` as `claude-code` inside Codex so Claude Code's MCP tools are available to Codex too.
 
 What it does not replace:
-- Claude-side runtime still lives in `.mcp.json`, `.claude/...`, and hook config written into the target project or home directory.
+- The Claude plugin is still the right path for Claude -> Codex MCP, subagent, review skill, and hook integration.
+- The Codex reverse bridge depends on a local Claude Code CLI install and auth state.
 
 This repo includes:
 - Codex marketplace: `.agents/plugins/marketplace.json`
 - Codex plugin root: `plugins/claude-codex-bridge`
-- Installer skill: `install-claude-codex-bridge`
+- Claude consultation skill: `claude-integration`
+- Claude debate skill: `claude-debate`
+- Claude-backed review skill: `claude-review`
+- Claude Code MCP install skill: `install-claude-code-mcp`
+- Codex-native git review skill: `codex-review`
 
 If you open Codex in this repo, install the plugin from `/plugins`, then ask:
 
 ```text
-Use the install-claude-codex-bridge skill to install the full bridge into this project.
+Use the claude-integration skill to review the auth subsystem and return exactly:
+1. Key findings
+2. Tradeoffs
+3. Recommended next step
+4. File references
 ```
 
-To enable the hook immediately:
+To expose Claude Code tools inside Codex too:
 
 ```text
-Use the install-claude-codex-bridge skill to install the full bridge into this project and enable the hook.
+Use the install-claude-code-mcp skill to add Claude Code as an MCP server for Codex.
+```
+
+To run a structured multi-round debate from Codex:
+
+```text
+Use the claude-debate skill to debate whether we should keep the current migration layer or replace it with direct service calls.
 ```
 
 <a id="quick-start"></a>
 ## 🚀 Quick Start
 
-### 🥇 Claude Plugin First
+### 🤖 If You Start In Claude Code
 
-If Claude Code already has plugin support in your environment, use the plugin path first.
+Use the Claude plugin.
 
 ```bash
 claude plugin marketplace add . --scope project
@@ -146,7 +207,38 @@ claude plugin install claude-codex-bridge --scope project
 
 Local directory sources do not support `--sparse`; use `--sparse .claude-plugin plugins` only when the marketplace source is GitHub or another git source.
 
-That gives the project a native Claude plugin package instead of copied bridge files.
+That gives you `Claude -> Codex` runtime integration.
+
+### 🧰 If You Start In Codex
+
+Use the Codex plugin.
+
+Install it from `/plugins`, then use one of:
+
+```text
+Use the claude-integration skill to review the auth subsystem.
+Use the claude-review skill to review my uncommitted changes.
+Use the claude-debate skill to debate this design with Claude Code.
+```
+
+That gives you `Codex -> Claude` runtime integration.
+
+### 🔁 If You Want Manual Codex-Side Wiring
+
+Use this only if you do not want the Codex plugin and are wiring the reverse bridge by hand.
+
+Manual Codex-side setup:
+
+```bash
+codex mcp add claude-code -- claude mcp serve
+python3 plugins/claude-codex-bridge/scripts/ask_claude.py --cwd "$PWD" --prompt "Review the auth subsystem and return exactly:
+1. Key findings
+2. Tradeoffs
+3. Recommended next step
+4. File references"
+```
+
+The first command exposes Claude Code's MCP tool surface to Codex. The second asks Claude Code directly for a structured opinion.
 
 ### 📁 Manual Project-Local Install
 
@@ -178,6 +270,9 @@ cp .claude/agents/codex-integration.md ~/.claude/agents/
 mkdir -p ~/.claude/skills/codex-review
 cp .claude/skills/codex-review/SKILL.md ~/.claude/skills/codex-review/
 
+mkdir -p ~/.claude/skills/codex-debate
+cp .claude/skills/codex-debate/SKILL.md ~/.claude/skills/codex-debate/
+
 ./hooks/install-hook.sh --global
 ```
 
@@ -190,10 +285,15 @@ Restart Claude Code after installation.
 
 | If you want to... | Use | Why | Config |
 |-------------------|-----|-----|--------|
-| Ask one well-formed question | `MCP bridge` | Fastest path, smallest setup cost | `.mcp.json` |
-| Hand off a compact workflow | `Subagent bridge` | Claude gets back a structured result | inherits `.mcp.json` |
-| Review git-defined changes | `Review skill` | Cleanest path when git already defines scope | `~/.codex/config.toml` |
-| Auto-answer routine decisions | `Hook bridge` | Automates routine low-risk decisions | hook default -> env -> flag |
+| From Claude, ask one well-formed question to Codex | `MCP bridge` | Fastest Claude -> Codex path | `.mcp.json` |
+| From Claude, hand off a compact workflow to Codex | `Subagent bridge` | Claude gets back a structured result | inherits `.mcp.json` |
+| From Claude, review git-defined changes with Codex defaults | `Review skill` | Cleanest Claude -> Codex path when git already defines scope | `~/.codex/config.toml` |
+| From Claude, run a structured multi-round debate with Codex | `codex-debate` | Explicit rebuttal workflow using `codex` + `codex-reply` | Claude plugin/manual skill install |
+| From Claude, auto-answer routine setup decisions with Codex | `Hook bridge` | Automates routine low-risk decisions | hook default -> env -> flag |
+| From Codex, ask Claude for a second opinion | `claude-integration` | Direct Claude consultation with arbitrary file scope | `plugins/.../scripts/ask_claude.py` |
+| From Codex, run a structured multi-round debate with Claude | `claude-debate` | Explicit Claude session persistence with point-by-point rounds | `.claude-codex-bridge/sessions/*.json` |
+| From Codex, review changes through Claude | `claude-review` | Keeps Codex as orchestrator while adding Claude review | `plugins/.../scripts/ask_claude.py` |
+| From Codex, expose Claude Code tools through MCP | `install-claude-code-mcp` | Adds `claude-code` MCP entry to Codex | `codex mcp` global config |
 
 <a id="best-practice-prompts"></a>
 ## 🗣️ Best-Practice Prompts
@@ -259,6 +359,9 @@ codex review --commit HEAD~1
 ### ✅ Requirements
 
 - Requires Claude Code with MCP stdio support and hook support enabled, plus `codex-cli 0.116.0`.
+- Codex -> Claude consultation requires a local Claude Code CLI with `-p/--print` support.
+- Codex -> Claude multi-turn continuation uses explicit session files under `.claude-codex-bridge/sessions/`.
+- Codex -> Claude MCP wiring requires both `codex mcp add` and `claude mcp serve`.
 - `./hooks/install-hook.sh --project /path/to/project` writes hook config to `/path/to/project/.claude/settings.local.json`.
 - `./hooks/install-hook.sh --global` writes hook config to `~/.claude/settings.local.json`.
 - Claude plugin marketplace entrypoint is `claude plugin marketplace add`; this repo exposes a local marketplace at `.claude-plugin/marketplace.json`.
@@ -270,6 +373,7 @@ codex review --commit HEAD~1
 - MCP only: copy `.mcp.json` into the project or run `claude mcp add ...` globally.
 - Subagent only: copy `.claude/agents/codex-integration.md` into `.claude/agents/` or `~/.claude/agents/`.
 - Review skill only: copy `.claude/skills/codex-review/SKILL.md` into `.claude/skills/codex-review/` or `~/.claude/skills/codex-review/`.
+- Debate skill only: copy `.claude/skills/codex-debate/SKILL.md` into `.claude/skills/codex-debate/` or `~/.claude/skills/codex-debate/`.
 - Hook only: run `./hooks/install-hook.sh --project /path/to/project` or `./hooks/install-hook.sh --global`.
 
 </details>
@@ -282,8 +386,34 @@ codex review --commit HEAD~1
 - Claude plugin components: `plugins/claude-codex-bridge/agents`, `plugins/claude-codex-bridge/skills`, `plugins/claude-codex-bridge/hooks`, `plugins/claude-codex-bridge/.mcp.json`
 - Codex marketplace: `.agents/plugins/marketplace.json`
 - Codex plugin manifest: `plugins/claude-codex-bridge/.codex-plugin/plugin.json`
-- Codex installer skill: `plugins/claude-codex-bridge/skills/install-claude-codex-bridge/SKILL.md`
-- Codex installer script: `plugins/claude-codex-bridge/scripts/install_bridge.py`
+- Claude Codex debate skill: `.claude/skills/codex-debate/SKILL.md`
+- Packaged Claude Codex debate skill: `plugins/claude-codex-bridge/skills/codex-debate/SKILL.md`
+- Codex Claude consultation skill: `plugins/claude-codex-bridge/skills/claude-integration/SKILL.md`
+- Codex Claude debate skill: `plugins/claude-codex-bridge/skills/claude-debate/SKILL.md`
+- Codex Claude review skill: `plugins/claude-codex-bridge/skills/claude-review/SKILL.md`
+- Codex Claude MCP install skill: `plugins/claude-codex-bridge/skills/install-claude-code-mcp/SKILL.md`
+- Codex helper scripts: `plugins/claude-codex-bridge/scripts/ask_claude.py`, `plugins/claude-codex-bridge/scripts/install_claude_code_mcp.py`
+- Legacy file-based Claude-side installer script: `plugins/claude-codex-bridge/scripts/install_bridge.py`
+
+</details>
+
+<details>
+<summary>Capability matrix</summary>
+
+| Capability | Claude -> Codex | Codex -> Claude | Notes |
+|---|---|---|---|
+| Arbitrary second opinion | Full | Full | Claude side uses MCP/subagent; Codex side uses `ask_claude.py` |
+| Git-based review | Full | Prompt-driven | Codex side review is structured through Claude prompts, not a Claude-native review subcommand |
+| Subagent-style sidecar | Full | Partial | Codex can keep Claude as a sidecar workflow, but not as a native Codex subagent type |
+| Multi-turn debate | Full | Full | Claude side uses `codex` + `codex-reply`; Codex side uses explicit Claude session files |
+| Routine decision hook | Full | Not supported | Reverse direction intentionally does not try to automate Claude permission prompts |
+
+Plugin-level comparison:
+
+| Plugin | Host runtime | Direction | Runtime entrypoints | Best for |
+|---|---|---|---|---|
+| Claude Code plugin | Claude Code | Claude -> Codex | `codex-server`, `codex-integration`, `codex-review`, `codex-debate`, hook | Claude-centric workflows |
+| Codex plugin | Codex | Codex -> Claude | `claude-integration`, `claude-review`, `claude-debate`, `install-claude-code-mcp` | Codex-centric workflows |
 
 </details>
 
@@ -320,7 +450,10 @@ rm /path/to/project/.copilot-session-id
 <summary>Troubleshooting</summary>
 
 - Claude cannot see `codex` MCP tools: confirm `.mcp.json` is present or the global MCP entry exists, then restart Claude Code.
+- Codex cannot see `claude-code` MCP tools: run `codex mcp add claude-code -- claude mcp serve` or use the `install-claude-code-mcp` skill, then restart Codex.
 - `codex review` uses the wrong model: check `~/.codex/config.toml`; the review path does not use `.mcp.json`.
+- `claude-integration` or `claude-review` fails immediately: confirm `claude` is installed, authenticated, and supports `-p`.
+- `claude-debate` resumes the wrong conversation: remove the saved file under `.claude-codex-bridge/sessions/` or rerun with `--reset-session`.
 - Hook does not trigger: confirm the hook is enabled and was installed into the target project's or global `settings.local.json`.
 - Hook fails silently: set `COPILOT_DEBUG=1` and inspect `/tmp/claude-copilot-hook.log`.
 - Codex auth errors: run `codex login`.

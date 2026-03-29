@@ -53,17 +53,14 @@ Codex 侧安装：
 <a id="plugin-matrix"></a>
 ## 🧭 插件对照表
 
-这个仓库现在会打出两个不同的运行时插件。它们共用一个仓库，但职责不同。
+两个插件，一个仓库。根据你从哪边开始任务来选择。
 
-| 如果你的主宿主是... | 安装哪个插件 | 方向 | 运行时能力 | 适合什么时候装 | 它不负责什么 |
-|---|---|---|---|---|---|
-| `Claude Code` | `Claude Code 插件` | `Claude -> Codex` | `codex-server` MCP、`codex-integration`、`codex-review`、`codex-debate`、可选 hook | 你的工作从 Claude 发起，希望把 Codex 接进来 | 不能让 Codex 反过来咨询 Claude；那是 Codex 插件的职责 |
-| `Codex` | `Codex 插件` | `Codex -> Claude` | `claude-integration`、`claude-review`、`claude-debate`、`install-claude-code-mcp` | 你的工作从 Codex 发起，希望把 Claude 接进来 | 不提供反向 hook 自动化；它依赖本地 Claude CLI |
+| 主要宿主 | 方向 | 安装命令 | 运行时能力 |
+|----------|------|----------|-----------|
+| **Claude Code** | Claude → Codex | `claude plugin install claude-codex-bridge` | MCP 服务器、子代理、审查、辩论、钩子 |
+| **Codex** | Codex → Claude | 从 `/plugins` 安装 | Claude 咨询、审查、辩论、MCP 注册 |
 
-一句话总结：
-- 如果 Claude 是主编排器，就装 Claude 插件。
-- 如果 Codex 是主编排器，就装 Codex 插件。
-- 只有你确实双向都在用时，才需要两个都装。
+**快速规则**：Claude 主导选 Claude 插件，Codex 主导选 Codex 插件。只有两边都用才同时装。
 
 <a id="demo-20s"></a>
 ## ⚡ 20 秒体验

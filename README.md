@@ -53,17 +53,14 @@ Open `/plugins` in Codex, add this repo's marketplace, then install `claude-code
 <a id="plugin-matrix"></a>
 ## 🧭 Plugin Matrix
 
-This repo now packages two different runtime plugins. They share one repository, but they do different jobs.
+Two plugins, one repository. Choose based on where you start your task.
 
-| If your primary host is... | Install this plugin | Direction | Main runtime capabilities | Use it when... | It does not do... |
-|---|---|---|---|---|---|
-| `Claude Code` | `Claude Code plugin` | `Claude -> Codex` | `codex-server` MCP, `codex-integration`, `codex-review`, `codex-debate`, optional hook | Your work starts in Claude and you want Codex inside that workflow | Let Codex consult Claude; that is the Codex plugin's job |
-| `Codex` | `Codex plugin` | `Codex -> Claude` | `claude-integration`, `claude-review`, `claude-debate`, `install-claude-code-mcp` | Your work starts in Codex and you want Claude inside that workflow | Provide reverse hook automation; it depends on local Claude CLI instead |
+| Primary Host | Direction | Install | Runtime Capabilities |
+|--------------|-----------|---------|---------------------|
+| **Claude Code** | Claude → Codex | `claude plugin install claude-codex-bridge` | MCP server, subagent, review, debate, hook |
+| **Codex** | Codex → Claude | Install from `/plugins` | Claude consultation, review, debate, MCP registration |
 
-Short version:
-- Install the Claude plugin when Claude is the orchestrator and Codex is the external counterpart.
-- Install the Codex plugin when Codex is the orchestrator and Claude is the external counterpart.
-- Install both only if you actively use both directions.
+**Quick rule**: Install the Claude plugin when Claude orchestrates and Codex is the external opinion. Install the Codex plugin when Codex orchestrates and Claude is the external opinion. Install both only if you actively use both directions.
 
 <a id="demo-20s"></a>
 ## ⚡ 20-Second Demo

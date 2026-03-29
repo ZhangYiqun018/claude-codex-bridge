@@ -8,6 +8,10 @@
 ![桥接形态](https://img.shields.io/badge/Modes-MCP%20%7C%20Subagent%20%7C%20Skill%20%7C%20Hook-7c3aed?style=flat-square)
 ![插件](https://img.shields.io/badge/Plugins-Claude%20%7C%20Codex-1d4ed8?style=flat-square)
 
+<p align="center">
+  <img src="./assets/figure.png" alt="Claude-Codex Bridge" width="600">
+</p>
+
 > 你正在用 Claude Code 写代码，突然想让 Codex 评估一下重构方案。
 >
 > **不用桥接**：切换终端、复制文件、丢失上下文、手动粘贴结果回来。
@@ -298,7 +302,7 @@ cp .claude/skills/codex-debate/SKILL.md ~/.claude/skills/codex-debate/
 <a id="best-practice-prompts"></a>
 ## 🗣️ 最佳实践提示词
 
-在提示词里直接点名桥接方式，Claude 的执行路径会稳定很多。
+在提示词里直接点名桥接方式，Claude 和 Codex 都更不容易猜错执行路径。
 
 ### 🔌 MCP Bridge
 
@@ -346,10 +350,35 @@ codex review --commit HEAD~1
 
 </details>
 
+### 🗣️ Debate Skill
+
+适合需要两个模型围绕同一问题多轮交锋、逐轮 rebuttal、最后收敛结论的场景。
+
+如果工作从 Claude 发起：
+
+```text
+使用 `codex-debate` 技能，围绕“是否应该移除当前 migration layer”跟 Codex 做 3 轮辩论，并严格按以下结构返回：
+1. 对上一轮观点的反驳
+2. 新增证据或风险
+3. 当前立场
+4. 最终建议
+```
+
+如果工作从 Codex 发起：
+
+```text
+使用 `claude-debate` 技能，围绕“是否应该移除当前 migration layer”跟 Claude Code 做 3 轮辩论，并严格按以下结构返回：
+1. 对上一轮观点的反驳
+2. 新增证据或风险
+3. 当前立场
+4. 最终建议
+```
+
 ### 📏 提示词规则
 
 - 明确范围：例如 `未提交更改`、`base main`、某个 commit SHA、某个子系统或某组文件。
 - 明确输出结构：例如问题发现、权衡点、建议、下一步、文件引用。
+- 多轮辩论时明确轮数、辩题和收敛格式，避免模型把 debate 退化成一次性意见输出。
 - 权限从小开始：优先 `read-only`，确实需要执行命令再升级。
 - git diff 审查优先用 `codex-review`，任意文件审查或自定义审查优先用 `codex-integration`。
 
@@ -358,42 +387,35 @@ codex review --commit HEAD~1
 
 ### ✅ 运行要求
 
-- 需要使用支持 MCP stdio 和钩子的 Claude Code，并安装 `codex-cli 0.116.0`。
+- 需要使用支持 MCP stdio 和钩子的 Claude Code，并安装 `codex-cli 0.117.0`。
 - Codex -> Claude 咨询需要本地 Claude Code CLI 支持 `-p/--print`。
 - Codex -> Claude 的多轮续聊依赖 `.claude-codex-bridge/sessions/` 下的显式 session 文件。
-- Codex -> Claude MCP 接线需要同时具备 `codex mcp add` 和 `claude mcp serve`。
-- `./hooks/install-hook.sh --project /path/to/project` 会把钩子配置写入 `/path/to/project/.claude/settings.local.json`。
-- `./hooks/install-hook.sh --global` 会把钩子配置写入 `~/.claude/settings.local.json`。
-- Claude 插件入口是 `claude plugin marketplace add`；这个仓库已经提供 repo-local marketplace：`.claude-plugin/marketplace.json`。
-- Codex 插件入口是 Codex CLI 里的 `/plugins`；这个仓库也提供 Codex marketplace：`.agents/plugins/marketplace.json`。
+
+### 📦 安装与配置
 
 <details>
 <summary>按需安装</summary>
 
 - 只安装 MCP：把 `.mcp.json` 放进项目，或全局执行 `claude mcp add ...`。
 - 只安装子代理：把 `.claude/agents/codex-integration.md` 复制到 `.claude/agents/` 或 `~/.claude/agents/`。
-- 只安装审查技能：把 `.claude/skills/codex-review/SKILL.md` 复制到 `.claude/skills/codex-review/` 或 `~/.claude/skills/codex-review/`。
-- 只安装 debate 技能：把 `.claude/skills/codex-debate/SKILL.md` 复制到 `.claude/skills/codex-debate/` 或 `~/.claude/skills/codex-debate/`。
-- 只安装钩子：运行 `./hooks/install-hook.sh --project /path/to/project` 或 `./hooks/install-hook.sh --global`。
+- 只安装审查技能：把 `.claude/skills/codex-review/SKILL.md` 复制到对应目录。
+- 只安装 debate 技能：把 `.claude/skills/codex-debate/SKILL.md` 复制到对应目录。
+- 只安装钩子：运行 `./hooks/install-hook.sh --project /path/to/project` 或 `--global`。
 
 </details>
+
+### 🏗️ 插件架构
 
 <details>
 <summary>插件打包结构</summary>
 
 - Claude marketplace：`.claude-plugin/marketplace.json`
 - Claude 插件清单：`plugins/claude-codex-bridge/.claude-plugin/plugin.json`
-- Claude 插件组件：`plugins/claude-codex-bridge/agents`、`plugins/claude-codex-bridge/skills`、`plugins/claude-codex-bridge/hooks`、`plugins/claude-codex-bridge/.mcp.json`
+- Claude 插件组件：`agents`、`skills`、`hooks`、`.mcp.json`
 - Codex marketplace：`.agents/plugins/marketplace.json`
 - Codex 插件清单：`plugins/claude-codex-bridge/.codex-plugin/plugin.json`
-- Claude 侧 Codex debate skill：`.claude/skills/codex-debate/SKILL.md`
-- 打包后的 Claude 侧 Codex debate skill：`plugins/claude-codex-bridge/skills/codex-debate/SKILL.md`
-- Codex Claude 咨询 skill：`plugins/claude-codex-bridge/skills/claude-integration/SKILL.md`
-- Codex Claude debate skill：`plugins/claude-codex-bridge/skills/claude-debate/SKILL.md`
-- Codex Claude 审查 skill：`plugins/claude-codex-bridge/skills/claude-review/SKILL.md`
-- Codex Claude MCP 安装 skill：`plugins/claude-codex-bridge/skills/install-claude-code-mcp/SKILL.md`
-- Codex 辅助脚本：`plugins/claude-codex-bridge/scripts/ask_claude.py`、`plugins/claude-codex-bridge/scripts/install_claude_code_mcp.py`
-- 旧的 Claude 侧文件安装脚本：`plugins/claude-codex-bridge/scripts/install_bridge.py`
+- Codex 侧技能：`claude-integration`、`claude-review`、`claude-debate`、`install-claude-code-mcp`
+- 辅助脚本：`ask_claude.py`、`install_claude_code_mcp.py`
 
 </details>
 
@@ -403,24 +425,18 @@ codex review --commit HEAD~1
 | 能力 | Claude -> Codex | Codex -> Claude | 说明 |
 |---|---|---|---|
 | 任意文件第二意见 | 完整支持 | 完整支持 | Claude 侧走 MCP/subagent；Codex 侧走 `ask_claude.py` |
-| 基于 git 的代码审查 | 完整支持 | Prompt-driven | Codex 侧目前是通过结构化提示词驱动 Claude 审查，不是 Claude 原生 review 子命令 |
-| Subagent 风格 sidecar | 完整支持 | 部分支持 | Codex 可以把 Claude 当 sidecar 工作流用，但还不是原生 Codex subagent 类型 |
-| 多轮辩论 | 完整支持 | 完整支持 | Claude 侧走 `codex` + `codex-reply`；Codex 侧走显式 Claude session 文件 |
-| 重复性决策 hook | 完整支持 | 不支持 | 反向方向不尝试自动化 Claude 的权限提示 |
-
-按插件看：
-
-| 插件 | 宿主运行时 | 方向 | 运行时入口 | 最适合 |
-|---|---|---|---|---|
-| Claude Code 插件 | Claude Code | Claude -> Codex | `codex-server`、`codex-integration`、`codex-review`、`codex-debate`、hook | Claude-centric 工作流 |
-| Codex 插件 | Codex | Codex -> Claude | `claude-integration`、`claude-review`、`claude-debate`、`install-claude-code-mcp` | Codex-centric 工作流 |
+| 基于 git 的代码审查 | 完整支持 | Prompt-driven | Codex 侧通过结构化提示词驱动 Claude 审查 |
+| 多轮辩论 | 完整支持 | 完整支持 | 显式 session 文件持久化 |
+| 重复性决策 hook | 完整支持 | 不支持 | 反向不尝试自动化 Claude 的权限提示 |
 
 </details>
+
+### ⚙️ 高级用法
 
 <details>
 <summary>Hook 覆盖项</summary>
 
-标记文件格式：
+标记文件格式（`.enable-copilot`）：
 
 ```text
 (第 1 行保留，留空)
@@ -428,7 +444,7 @@ gpt-5.4
 /path/to/mockup.png,/path/to/screenshot.jpg
 ```
 
-可选环境变量：
+环境变量：
 
 ```bash
 export COPILOT_MODEL=gpt-5.4
@@ -446,17 +462,18 @@ rm /path/to/project/.copilot-session-id
 
 </details>
 
-<details>
-<summary>故障排查</summary>
+### 🔧 故障排查
 
-- Claude 看不到 `codex` MCP 工具：确认项目里有 `.mcp.json`，或已经完成全局 MCP 配置，然后重启 Claude Code。
-- Codex 看不到 `claude-code` MCP 工具：运行 `codex mcp add claude-code -- claude mcp serve`，或使用 `install-claude-code-mcp` skill，然后重启 Codex。
-- `codex review` 使用了错误模型：检查 `~/.codex/config.toml`，因为 review 路径不走 `.mcp.json`。
-- `claude-integration` 或 `claude-review` 一启动就失败：确认 `claude` 已安装、已登录，并且支持 `-p`。
-- `claude-debate` 接到了错误的旧会话：删除 `.claude-codex-bridge/sessions/` 里的对应 session 文件，或者重新执行时加 `--reset-session`。
-- 钩子没有触发：确认钩子已经启用，且已安装进目标项目或全局的 `settings.local.json`。
-- 钩子静默失败：设置 `COPILOT_DEBUG=1`，再查看 `/tmp/claude-copilot-hook.log`。
-- Codex 认证报错：运行 `codex login`。
+<details>
+<summary>常见问题</summary>
+
+- **Claude 看不到 `codex` MCP 工具**：确认项目里有 `.mcp.json`，然后重启 Claude Code。
+- **Codex 看不到 `claude-code` MCP 工具**：运行 `codex mcp add claude-code -- claude mcp serve`，然后重启 Codex。
+- **`codex review` 使用了错误模型**：检查 `~/.codex/config.toml`。
+- **`claude-debate` 接到了错误的旧会话**：删除 `.claude-codex-bridge/sessions/` 里的对应文件。
+- **钩子没有触发**：确认钩子已安装进 `settings.local.json`。
+- **钩子静默失败**：设置 `COPILOT_DEBUG=1`，查看 `/tmp/claude-copilot-hook.log`。
+- **Codex 认证报错**：运行 `codex login`。
 
 </details>
 

@@ -8,6 +8,10 @@
 ![Modes](https://img.shields.io/badge/Modes-MCP%20%7C%20Subagent%20%7C%20Skill%20%7C%20Hook-7c3aed?style=flat-square)
 ![Plugins](https://img.shields.io/badge/Plugins-Claude%20%7C%20Codex-1d4ed8?style=flat-square)
 
+<p align="center">
+  <img src="./assets/figure.png" alt="Claude-Codex Bridge" width="600">
+</p>
+
 > You already have Claude Code open. Now you need Codex's opinion on a migration plan.
 >
 > **Without this bridge**: Copy files, switch terminals, lose context, paste results back manually.
@@ -298,7 +302,7 @@ Restart Claude Code after installation.
 <a id="best-practice-prompts"></a>
 ## 🗣️ Best-Practice Prompts
 
-Name the bridge mode explicitly in your prompt. That keeps Claude from guessing the workflow.
+Name the bridge mode explicitly in your prompt. That keeps both Claude and Codex from guessing the workflow.
 
 ### 🔌 MCP Bridge
 
@@ -346,10 +350,35 @@ codex review --commit HEAD~1
 
 </details>
 
+### 🗣️ Debate Skill
+
+Best when you want the two models to argue through the same question across multiple rounds and converge explicitly.
+
+If the workflow starts in Claude:
+
+```text
+Use the `codex-debate` skill to run a 3-round debate with Codex on whether we should remove the current migration layer, and return exactly:
+1. Rebuttal to the previous round
+2. New evidence or risks
+3. Current position
+4. Final recommendation
+```
+
+If the workflow starts in Codex:
+
+```text
+Use the `claude-debate` skill to run a 3-round debate with Claude Code on whether we should remove the current migration layer, and return exactly:
+1. Rebuttal to the previous round
+2. New evidence or risks
+3. Current position
+4. Final recommendation
+```
+
 ### 📏 Prompting Rules
 
 - State the scope explicitly: `uncommitted changes`, `base main`, a commit SHA, a subsystem, or a file set.
 - State the output shape explicitly: findings, tradeoffs, recommendations, next steps, or file references.
+- For debate workflows, state the round count, debate topic, and convergence format so it does not collapse into a one-shot opinion.
 - Prefer `read-only` unless the task genuinely needs command execution.
 - Use `codex-review` for git diffs and `codex-integration` for arbitrary files or custom review instructions.
 
@@ -361,11 +390,8 @@ codex review --commit HEAD~1
 - Requires Claude Code with MCP stdio support and hook support enabled, plus `codex-cli 0.116.0`.
 - Codex -> Claude consultation requires a local Claude Code CLI with `-p/--print` support.
 - Codex -> Claude multi-turn continuation uses explicit session files under `.claude-codex-bridge/sessions/`.
-- Codex -> Claude MCP wiring requires both `codex mcp add` and `claude mcp serve`.
-- `./hooks/install-hook.sh --project /path/to/project` writes hook config to `/path/to/project/.claude/settings.local.json`.
-- `./hooks/install-hook.sh --global` writes hook config to `~/.claude/settings.local.json`.
-- Claude plugin marketplace entrypoint is `claude plugin marketplace add`; this repo exposes a local marketplace at `.claude-plugin/marketplace.json`.
-- Codex plugin install entrypoint is `/plugins` inside the Codex CLI; this repo also exposes a Codex marketplace at `.agents/plugins/marketplace.json`.
+
+### 📦 Installation & Configuration
 
 <details>
 <summary>Selective install</summary>
@@ -378,22 +404,18 @@ codex review --commit HEAD~1
 
 </details>
 
+### 🏗️ Plugin Architecture
+
 <details>
-<summary>Plugin packaging</summary>
+<summary>Plugin packaging structure</summary>
 
 - Claude marketplace: `.claude-plugin/marketplace.json`
 - Claude plugin manifest: `plugins/claude-codex-bridge/.claude-plugin/plugin.json`
 - Claude plugin components: `plugins/claude-codex-bridge/agents`, `plugins/claude-codex-bridge/skills`, `plugins/claude-codex-bridge/hooks`, `plugins/claude-codex-bridge/.mcp.json`
 - Codex marketplace: `.agents/plugins/marketplace.json`
 - Codex plugin manifest: `plugins/claude-codex-bridge/.codex-plugin/plugin.json`
-- Claude Codex debate skill: `.claude/skills/codex-debate/SKILL.md`
-- Packaged Claude Codex debate skill: `plugins/claude-codex-bridge/skills/codex-debate/SKILL.md`
-- Codex Claude consultation skill: `plugins/claude-codex-bridge/skills/claude-integration/SKILL.md`
-- Codex Claude debate skill: `plugins/claude-codex-bridge/skills/claude-debate/SKILL.md`
-- Codex Claude review skill: `plugins/claude-codex-bridge/skills/claude-review/SKILL.md`
-- Codex Claude MCP install skill: `plugins/claude-codex-bridge/skills/install-claude-code-mcp/SKILL.md`
-- Codex helper scripts: `plugins/claude-codex-bridge/scripts/ask_claude.py`, `plugins/claude-codex-bridge/scripts/install_claude_code_mcp.py`
-- Legacy file-based Claude-side installer script: `plugins/claude-codex-bridge/scripts/install_bridge.py`
+- Codex-side skills: `claude-integration`, `claude-review`, `claude-debate`, `install-claude-code-mcp`
+- Helper scripts: `ask_claude.py`, `install_claude_code_mcp.py`
 
 </details>
 
@@ -403,24 +425,18 @@ codex review --commit HEAD~1
 | Capability | Claude -> Codex | Codex -> Claude | Notes |
 |---|---|---|---|
 | Arbitrary second opinion | Full | Full | Claude side uses MCP/subagent; Codex side uses `ask_claude.py` |
-| Git-based review | Full | Prompt-driven | Codex side review is structured through Claude prompts, not a Claude-native review subcommand |
-| Subagent-style sidecar | Full | Partial | Codex can keep Claude as a sidecar workflow, but not as a native Codex subagent type |
-| Multi-turn debate | Full | Full | Claude side uses `codex` + `codex-reply`; Codex side uses explicit Claude session files |
-| Routine decision hook | Full | Not supported | Reverse direction intentionally does not try to automate Claude permission prompts |
-
-Plugin-level comparison:
-
-| Plugin | Host runtime | Direction | Runtime entrypoints | Best for |
-|---|---|---|---|---|
-| Claude Code plugin | Claude Code | Claude -> Codex | `codex-server`, `codex-integration`, `codex-review`, `codex-debate`, hook | Claude-centric workflows |
-| Codex plugin | Codex | Codex -> Claude | `claude-integration`, `claude-review`, `claude-debate`, `install-claude-code-mcp` | Codex-centric workflows |
+| Git-based review | Full | Prompt-driven | Codex side review is structured through Claude prompts |
+| Multi-turn debate | Full | Full | Explicit session files for persistence |
+| Routine decision hook | Full | Not supported | Reverse direction does not automate Claude prompts |
 
 </details>
+
+### ⚙️ Advanced Usage
 
 <details>
 <summary>Hook overrides</summary>
 
-Flag-file format:
+Flag-file format (`.enable-copilot`):
 
 ```text
 (line 1 reserved, leave empty)
@@ -428,7 +444,7 @@ gpt-5.4
 /path/to/mockup.png,/path/to/screenshot.jpg
 ```
 
-Optional environment variables:
+Environment variables:
 
 ```bash
 export COPILOT_MODEL=gpt-5.4
@@ -446,17 +462,18 @@ rm /path/to/project/.copilot-session-id
 
 </details>
 
-<details>
-<summary>Troubleshooting</summary>
+### 🔧 Troubleshooting
 
-- Claude cannot see `codex` MCP tools: confirm `.mcp.json` is present or the global MCP entry exists, then restart Claude Code.
-- Codex cannot see `claude-code` MCP tools: run `codex mcp add claude-code -- claude mcp serve` or use the `install-claude-code-mcp` skill, then restart Codex.
-- `codex review` uses the wrong model: check `~/.codex/config.toml`; the review path does not use `.mcp.json`.
-- `claude-integration` or `claude-review` fails immediately: confirm `claude` is installed, authenticated, and supports `-p`.
-- `claude-debate` resumes the wrong conversation: remove the saved file under `.claude-codex-bridge/sessions/` or rerun with `--reset-session`.
-- Hook does not trigger: confirm the hook is enabled and was installed into the target project's or global `settings.local.json`.
-- Hook fails silently: set `COPILOT_DEBUG=1` and inspect `/tmp/claude-copilot-hook.log`.
-- Codex auth errors: run `codex login`.
+<details>
+<summary>Common issues</summary>
+
+- **Claude cannot see `codex` MCP tools**: confirm `.mcp.json` is present, then restart Claude Code.
+- **Codex cannot see `claude-code` MCP tools**: run `codex mcp add claude-code -- claude mcp serve`, then restart Codex.
+- **`codex review` uses wrong model**: check `~/.codex/config.toml`.
+- **`claude-debate` resumes wrong conversation**: remove the saved file under `.claude-codex-bridge/sessions/`.
+- **Hook does not trigger**: confirm the hook is installed in `settings.local.json`.
+- **Hook fails silently**: set `COPILOT_DEBUG=1` and check `/tmp/claude-copilot-hook.log`.
+- **Codex auth errors**: run `codex login`.
 
 </details>
 

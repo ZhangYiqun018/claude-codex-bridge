@@ -284,17 +284,24 @@ Restart Claude Code after installation.
 <a id="choose-a-bridge"></a>
 ## 🧭 Choose a Bridge
 
-| If you want to... | Use | Why | Config |
-|-------------------|-----|-----|--------|
-| From Claude, ask one well-formed question to Codex | `MCP bridge` | Fastest Claude -> Codex path | `.mcp.json` |
-| From Claude, hand off a compact workflow to Codex | `Subagent bridge` | Claude gets back a structured result | inherits `.mcp.json` |
-| From Claude, review git-defined changes with Codex defaults | `Review skill` | Cleanest Claude -> Codex path when git already defines scope | `~/.codex/config.toml` |
-| From Claude, run a structured multi-round debate with Codex | `codex-debate` | Explicit rebuttal workflow using `codex` + `codex-reply` | Claude plugin/manual skill install |
-| From Claude, auto-answer routine setup decisions with Codex | `Hook bridge` | Automates routine low-risk decisions | hook default -> env -> flag |
-| From Codex, ask Claude for a second opinion | `claude-integration` | Direct Claude consultation with arbitrary file scope | `plugins/.../scripts/ask_claude.py` |
-| From Codex, run a structured multi-round debate with Claude | `claude-debate` | Explicit Claude session persistence with point-by-point rounds | `.claude-codex-bridge/sessions/*.json` |
-| From Codex, review changes through Claude | `claude-review` | Keeps Codex as orchestrator while adding Claude review | `plugins/.../scripts/ask_claude.py` |
-| From Codex, expose Claude Code tools through MCP | `install-claude-code-mcp` | Adds `claude-code` MCP entry to Codex | `codex mcp` global config |
+### From Claude Code → Codex
+
+| To... | Use | Config |
+|-------|-----|--------|
+| Ask one focused question | `MCP bridge` | `.mcp.json` |
+| Hand off a workflow | `Subagent bridge` | inherits `.mcp.json` |
+| Review git changes | `Review skill` | `~/.codex/config.toml` |
+| Run multi-round debate | `codex-debate` | Claude plugin |
+| Auto-answer routine decisions | `Hook bridge` | env / flag |
+
+### From Codex → Claude Code
+
+| To... | Use | Config |
+|-------|-----|--------|
+| Get a second opinion | `claude-integration` | `ask_claude.py` |
+| Review changes | `claude-review` | `ask_claude.py` |
+| Run multi-round debate | `claude-debate` | `.claude-codex-bridge/sessions/` |
+| Expose Claude tools in Codex | `install-claude-code-mcp` | `codex mcp` |
 
 <a id="best-practice-prompts"></a>
 ## 🗣️ Best-Practice Prompts

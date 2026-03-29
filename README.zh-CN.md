@@ -284,17 +284,24 @@ cp .claude/skills/codex-debate/SKILL.md ~/.claude/skills/codex-debate/
 <a id="choose-a-bridge"></a>
 ## 🧭 如何选择桥接方式
 
-| 如果你想... | 使用方式 | 为什么适合 | 配置位置 |
-|-------------|----------|------------|----------|
-| 从 Claude 向 Codex 发起一次明确的问题 | `MCP bridge` | 最快的 Claude -> Codex 路径 | `.mcp.json` |
-| 从 Claude 委托一段紧凑工作流给 Codex | `Subagent bridge` | Claude 能收回结构化结果 | 继承 `.mcp.json` |
-| 从 Claude 用 Codex 默认能力审 git 改动 | `Review skill` | git 已经定义好范围时最省事 | `~/.codex/config.toml` |
-| 从 Claude 发起和 Codex 的结构化多轮辩论 | `codex-debate` | 显式 rebuttal 工作流，使用 `codex` + `codex-reply` | Claude 插件或手工 skill 安装 |
-| 从 Claude 用 Codex 自动处理重复性决策提示 | `Hook bridge` | 自动处理低风险日常决策 | 钩子默认值 -> 环境变量 -> 标记文件 |
-| 从 Codex 向 Claude 要第二意见 | `claude-integration` | 直接做 Claude 咨询，范围不受 git 限制 | `plugins/.../scripts/ask_claude.py` |
-| 从 Codex 发起和 Claude 的结构化多轮辩论 | `claude-debate` | 用显式 Claude session 做逐轮辩论 | `.claude-codex-bridge/sessions/*.json` |
-| 从 Codex 通过 Claude 审查改动 | `claude-review` | 保持 Codex 编排，同时增加 Claude 审查 | `plugins/.../scripts/ask_claude.py` |
-| 从 Codex 暴露 Claude Code 的 MCP 工具 | `install-claude-code-mcp` | 给 Codex 增加 `claude-code` MCP 条目 | `codex mcp` 全局配置 |
+### 从 Claude Code → Codex
+
+| 目的 | 使用方式 | 配置 |
+|------|----------|------|
+| 发起一次明确问题 | `MCP bridge` | `.mcp.json` |
+| 委托工作流 | `Subagent bridge` | 继承 `.mcp.json` |
+| 审查 git 改动 | `Review skill` | `~/.codex/config.toml` |
+| 多轮辩论 | `codex-debate` | Claude 插件 |
+| 自动处理重复决策 | `Hook bridge` | 环境变量 / 标记文件 |
+
+### 从 Codex → Claude Code
+
+| 目的 | 使用方式 | 配置 |
+|------|----------|------|
+| 获取第二意见 | `claude-integration` | `ask_claude.py` |
+| 审查改动 | `claude-review` | `ask_claude.py` |
+| 多轮辩论 | `claude-debate` | `.claude-codex-bridge/sessions/` |
+| 在 Codex 暴露 Claude 工具 | `install-claude-code-mcp` | `codex mcp` |
 
 <a id="best-practice-prompts"></a>
 ## 🗣️ 最佳实践提示词
